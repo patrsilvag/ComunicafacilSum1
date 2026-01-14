@@ -7,13 +7,13 @@ plugins {
 android {
     namespace = "com.psilva.comunicafacil"
     compileSdk {
-        version = release(36)
+        version = 34
     }
 
     defaultConfig {
         applicationId = "com.psilva.comunicafacil"
-        minSdk = 30
-        targetSdk = 36
+        minSdk = 24
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
