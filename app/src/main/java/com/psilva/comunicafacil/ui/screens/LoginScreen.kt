@@ -72,14 +72,24 @@ fun LoginScreen() {
             Button(
                 onClick = {
                     alcance.launch {
-                        if (correo.isBlank() || clave.isBlank()) {
-                            estadoSnackbar.showSnackbar(
-                                "Ingrese correo y contraseña"
-                            )
-                        } else {
-                            estadoSnackbar.showSnackbar(
-                                "Datos ingresados correctamente (validación básica)"
-                            )
+                        when {
+                            correo.isBlank() || clave.isBlank() -> {
+                                estadoSnackbar.showSnackbar(
+                                    "Ingrese correo y contraseña"
+                                )
+                            }
+
+                            !correo.contains("@") -> {
+                                estadoSnackbar.showSnackbar(
+                                    "Ingrese un correo válido"
+                                )
+                            }
+
+                            else -> {
+                                estadoSnackbar.showSnackbar(
+                                    "Datos ingresados correctamente (validación básica)"
+                                )
+                            }
                         }
                     }
                 },
