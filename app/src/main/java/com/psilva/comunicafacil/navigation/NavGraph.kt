@@ -40,7 +40,7 @@ fun NavGraph(navController: NavHostController, usuariosViewModel: UsuariosViewMo
 
         composable(Screen.Recuperar.route) {
             RecoverScreen(
-                onVolverLogin = { navController.popBackStack() }
+                onVolverLogin = { navController.popBackStack()},usuariosViewModel = usuariosViewModel
             )
             composable(Screen.Home.route) {
                 HomeScreen()

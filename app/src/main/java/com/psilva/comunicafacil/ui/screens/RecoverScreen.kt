@@ -17,9 +17,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import kotlinx.coroutines.launch
+import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
+
 
 @Composable
-fun RecoverScreen(onVolverLogin: () -> Unit) {
+fun RecoverScreen(onVolverLogin: () -> Unit,
+                  usuariosViewModel: UsuariosViewModel) {
 
     var correo by remember { mutableStateOf("") }
 
@@ -68,10 +71,14 @@ fun RecoverScreen(onVolverLogin: () -> Unit) {
                             !correo.contains("@") ->
                                 estadoSnackbar.showSnackbar("Ingrese un correo válido")
 
-                            else ->
-                                estadoSnackbar.showSnackbar(
-                                    "Solicitud registrada (validación básica)"
-                                )
+                            else -> {
+                                val existe = usuariosViewModel.existeCorreo(correo)
+                                if (existe) {
+                                    estadoSnackbar.showSnackbar("Correo encontrado. Recuperación simulada")
+                                } else {
+                                    estadoSnackbar.showSnackbar("Correo no registrado")
+                                }
+                            }
                         }
                     }
                 },
@@ -81,6 +88,7 @@ fun RecoverScreen(onVolverLogin: () -> Unit) {
             ) {
                 Text("Enviar")
             }
+
 
             Spacer(modifier = Modifier.height(12.dp))
 
