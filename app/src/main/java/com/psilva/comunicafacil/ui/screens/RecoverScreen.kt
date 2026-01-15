@@ -2,6 +2,7 @@ package com.psilva.comunicafacil.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -40,5 +41,16 @@ fun RecoverScreen() {
                 imeAction = ImeAction.Done
             )
         )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Button(
+            onClick = { },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
+        ) {
+            Text("Enviar")
+        }
     }
 }
