@@ -21,9 +21,7 @@ import com.psilva.comunicafacil.model.Usuario
 import kotlinx.coroutines.launch
 import com.psilva.comunicafacil.viewmodel.ResultadoRegistro
 
-import androidx.compose.foundation.background
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.ui.graphics.Color
+
 import androidx.compose.ui.text.style.TextOverflow
 
 
@@ -105,8 +103,9 @@ fun RegisterScreen(onVolverLogin: () -> Unit,
                     onValueChange = {},
                     label = { Text("Tipo de usuario") },
                     readOnly = true,
-                    enabled = false, // importante: evita que el TextField se "coma" el click
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { menuAbierto = true }
                 )
 
                 DropdownMenu(
@@ -220,7 +219,7 @@ fun RegisterScreen(onVolverLogin: () -> Unit,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
-                    Divider()
+                    HorizontalDivider()
                 }
             }
 
@@ -264,7 +263,7 @@ fun RegisterScreen(onVolverLogin: () -> Unit,
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Button(
+            OutlinedButton(
                 onClick = { onVolverLogin() },
                 modifier = Modifier
                     .fillMaxWidth()
