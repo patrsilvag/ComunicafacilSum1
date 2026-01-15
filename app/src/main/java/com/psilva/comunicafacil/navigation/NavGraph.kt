@@ -8,9 +8,10 @@ import androidx.navigation.compose.composable
 import com.psilva.comunicafacil.ui.screens.LoginScreen
 import com.psilva.comunicafacil.ui.screens.RecoverScreen
 import com.psilva.comunicafacil.ui.screens.RegisterScreen
+import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
 
 @Composable
-fun NavGraph(navController: NavHostController) {
+fun NavGraph(navController: NavHostController, usuariosViewModel: UsuariosViewModel) {
 
     NavHost(
         navController = navController,

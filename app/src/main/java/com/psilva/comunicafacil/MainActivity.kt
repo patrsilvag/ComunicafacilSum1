@@ -6,7 +6,8 @@ import androidx.activity.compose.setContent
 import androidx.navigation.compose.rememberNavController
 import com.psilva.comunicafacil.navigation.NavGraph
 import com.psilva.comunicafacil.ui.theme.ComunicafacilTheme
-
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -14,7 +15,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             ComunicafacilTheme {
                 val navController = rememberNavController()
-                NavGraph(navController = navController)
+                val usuariosViewModel: UsuariosViewModel = viewModel()
+                NavGraph(navController = navController, usuariosViewModel = usuariosViewModel)
+
             }
         }
     }
