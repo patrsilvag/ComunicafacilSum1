@@ -42,10 +42,17 @@ fun NavGraph(navController: NavHostController, usuariosViewModel: UsuariosViewMo
             RecoverScreen(
                 onVolverLogin = { navController.popBackStack()},usuariosViewModel = usuariosViewModel
             )
-            composable(Screen.Home.route) {
-                HomeScreen()
-            }
 
+        }
+
+        composable(Screen.Home.route) {
+            HomeScreen(
+                onCerrarSesion = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
+                }
+            )
         }
     }
 }

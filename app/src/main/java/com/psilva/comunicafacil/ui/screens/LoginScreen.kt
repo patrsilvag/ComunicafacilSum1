@@ -13,7 +13,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
-import kotlinx.coroutines.launch
+
 
 @Composable
 fun LoginScreen(onIrARegistro: () -> Unit,
@@ -89,7 +89,7 @@ fun LoginScreen(onIrARegistro: () -> Unit,
                                 )
                             }
                             usuariosViewModel.validarLogin(correo, clave) -> {
-                                estadoSnackbar.showSnackbar("Acceso permitido")
+                                estadoSnackbar.showSnackbar("Acceso permitido",duration = SnackbarDuration.Short)
                                 onLoginExitoso()
                             }
                             else -> {
