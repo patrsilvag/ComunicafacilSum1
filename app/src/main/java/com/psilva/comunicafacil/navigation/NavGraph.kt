@@ -21,7 +21,13 @@ fun NavGraph(navController: NavHostController, usuariosViewModel: UsuariosViewMo
         composable(Screen.Login.route) {
             LoginScreen(
                 onIrARegistro  = { navController.navigate(Screen.Registro.route) },
-                onIrARecuperar  = { navController.navigate(Screen.Recuperar.route) }
+                onIrARecuperar  = { navController.navigate(Screen.Recuperar.route) } ,
+                onLoginExitoso = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                },
+                usuariosViewModel = usuariosViewModel
             )
         }
 

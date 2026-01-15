@@ -12,10 +12,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(onIrARegistro: () -> Unit,
-                onIrARecuperar: () -> Unit) {
+                onIrARecuperar: () -> Unit,
+                onLoginExitoso: () -> Unit,
+                usuariosViewModel: UsuariosViewModel) {
 
     var correo by remember { mutableStateOf("") }
     var clave by remember { mutableStateOf("") }
@@ -70,7 +74,6 @@ fun LoginScreen(onIrARegistro: () -> Unit,
             )
 
             Spacer(modifier = Modifier.height(24.dp))
-
             Button(
                 onClick = {
                     alcance.launch {
@@ -80,16 +83,18 @@ fun LoginScreen(onIrARegistro: () -> Unit,
                                     "Ingrese correo y contraseña"
                                 )
                             }
-
                             !correo.contains("@") -> {
                                 estadoSnackbar.showSnackbar(
                                     "Ingrese un correo válido"
                                 )
                             }
-
+                            usuariosViewModel.validarLogin(correo, clave) -> {
+                                estadoSnackbar.showSnackbar("Acceso permitido")
+                                onLoginExitoso()
+                            }
                             else -> {
                                 estadoSnackbar.showSnackbar(
-                                    "Datos ingresados correctamente (validación básica)"
+                                    "Credenciales inválidas"
                                 )
                             }
                         }
@@ -101,6 +106,8 @@ fun LoginScreen(onIrARegistro: () -> Unit,
             ) {
                 Text("Ingresar")
             }
+
+
 
             Text(
                 text = "Crear cuenta",
