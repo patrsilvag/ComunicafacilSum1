@@ -21,6 +21,11 @@ import com.psilva.comunicafacil.model.Usuario
 import kotlinx.coroutines.launch
 import com.psilva.comunicafacil.viewmodel.ResultadoRegistro
 
+import androidx.compose.foundation.background
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
+
 
 @Composable
 fun RegisterScreen(onVolverLogin: () -> Unit,
@@ -152,6 +157,71 @@ fun RegisterScreen(onVolverLogin: () -> Unit,
                     onCheckedChange = { aceptaTerminos = it }
                 )
                 Text(text = "Acepto los términos y condiciones")
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Usuarios registrados (${usuariosViewModel.usuarios.size}/5)",
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Encabezado tipo tabla
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Correo",
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Tipo",
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // Filas
+            if (usuariosViewModel.usuarios.isEmpty()) {
+                Text(
+                    text = "Aún no hay usuarios registrados.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            } else {
+                usuariosViewModel.usuarios.forEach { usuario ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = usuario.correo,
+                            modifier = Modifier.weight(1f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = usuario.tipoUsuario,
+                            modifier = Modifier.weight(1f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    Divider()
+                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
