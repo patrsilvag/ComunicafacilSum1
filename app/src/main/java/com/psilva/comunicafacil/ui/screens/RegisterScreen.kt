@@ -14,6 +14,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.window.PopupProperties
 
 import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
@@ -32,6 +36,7 @@ fun RegisterScreen(onVolverLogin: () -> Unit,
     // --- VARIABLES DE ESTADO ---
     var correo by remember { mutableStateOf("") }
     var clave by remember { mutableStateOf("") }
+    var claveVisible by remember { mutableStateOf(false) }
 
     // Estado para Dropdown (Tipo de Usuario)
     val tiposUsuario = listOf("Estudiante", "Docente", "Apoderado")
@@ -85,8 +90,33 @@ fun RegisterScreen(onVolverLogin: () -> Unit,
                 label = { Text("Contraseña") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done)
+                visualTransformation = if (claveVisible) {
+                    VisualTransformation.None
+                } else {
+                    PasswordVisualTransformation()
+                },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                trailingIcon = {
+                    val descripcion = if (claveVisible) {
+                        "Ocultar contraseña"
+                    } else {
+                        "Mostrar contraseña"
+                    }
+
+                    IconButton(onClick = { claveVisible = !claveVisible }) {
+                        Icon(
+                            imageVector = if (claveVisible) {
+                                Icons.Filled.VisibilityOff
+                            } else {
+                                Icons.Filled.Visibility
+                            },
+                            contentDescription = descripcion
+                        )
+                    }
+                }
             )
 
             Spacer(modifier = Modifier.height(20.dp))

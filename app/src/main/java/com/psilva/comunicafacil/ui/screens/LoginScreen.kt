@@ -3,6 +3,9 @@ package com.psilva.comunicafacil.ui.screens
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -10,10 +13,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
 import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
-
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(onIrARegistro: () -> Unit,
@@ -23,6 +26,7 @@ fun LoginScreen(onIrARegistro: () -> Unit,
 
     var correo by remember { mutableStateOf("") }
     var clave by remember { mutableStateOf("") }
+    var claveVisible by remember { mutableStateOf(false) }
 
     val estadoSnackbar = remember { SnackbarHostState() }
     val alcance = rememberCoroutineScope()
@@ -66,12 +70,35 @@ fun LoginScreen(onIrARegistro: () -> Unit,
                 label = { Text("Contraseña") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
+                visualTransformation = if (claveVisible) {
+                    VisualTransformation.None
+                } else {
+                    PasswordVisualTransformation()
+                },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Password,
                     imeAction = ImeAction.Done
-                )
+                ),
+                trailingIcon = {
+                    val descripcion = if (claveVisible) {
+                        "Ocultar contraseña"
+                    } else {
+                        "Mostrar contraseña"
+                    }
+
+                    IconButton(onClick = { claveVisible = !claveVisible }) {
+                        Icon(
+                            imageVector = if (claveVisible) {
+                                Icons.Filled.VisibilityOff
+                            } else {
+                                Icons.Filled.Visibility
+                            },
+                            contentDescription = descripcion
+                        )
+                    }
+                }
             )
+
 
             Spacer(modifier = Modifier.height(24.dp))
             Button(
@@ -91,6 +118,7 @@ fun LoginScreen(onIrARegistro: () -> Unit,
                             usuariosViewModel.validarLogin(correo, clave) -> {
                                 estadoSnackbar.showSnackbar("Acceso permitido",duration = SnackbarDuration.Short)
                                 onLoginExitoso()
+
                             }
                             else -> {
                                 estadoSnackbar.showSnackbar(
