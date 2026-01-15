@@ -1,5 +1,6 @@
 package com.psilva.comunicafacil.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -13,7 +14,8 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 
 @Composable
-fun LoginScreen() {
+fun LoginScreen(onIrARegistro: () -> Unit,
+                onIrARecuperar: () -> Unit) {
 
     var correo by remember { mutableStateOf("") }
     var clave by remember { mutableStateOf("") }
@@ -99,6 +101,21 @@ fun LoginScreen() {
             ) {
                 Text("Ingresar")
             }
+
+            Text(
+                text = "Crear cuenta",
+                modifier = Modifier
+                    .padding(top = 12.dp)
+                    .clickable { onIrARegistro() }
+            )
+
+            Text(
+                text = "¿Olvidaste tu contraseña?",
+                modifier = Modifier
+                    .padding(top = 8.dp)
+                    .clickable { onIrARecuperar() }
+            )
+
         }
     }
 }

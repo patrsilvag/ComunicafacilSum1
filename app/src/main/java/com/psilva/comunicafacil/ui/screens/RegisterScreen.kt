@@ -18,7 +18,7 @@ import androidx.compose.ui.window.PopupProperties
 
 
 @Composable
-fun RegisterScreen() {
+fun RegisterScreen(onVolverLogin: () -> Unit) {
 
     // --- VARIABLES DE ESTADO ---
     var correo by remember { mutableStateOf("") }
@@ -145,6 +145,15 @@ fun RegisterScreen() {
                 )
                 Text(text = "Acepto los términos y condiciones")
             }
+            Button(
+                onClick = { onVolverLogin() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+            ) {
+                Text("Volver")
+            }
         }
+
     }
 }

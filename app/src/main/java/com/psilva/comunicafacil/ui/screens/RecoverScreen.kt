@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -18,7 +19,7 @@ import androidx.compose.material3.SnackbarHostState
 import kotlinx.coroutines.launch
 
 @Composable
-fun RecoverScreen() {
+fun RecoverScreen(onVolverLogin: () -> Unit) {
 
     var correo by remember { mutableStateOf("") }
 
@@ -80,6 +81,18 @@ fun RecoverScreen() {
             ) {
                 Text("Enviar")
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedButton(
+                onClick = { onVolverLogin() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+            ) {
+                Text("Volver")
+            }
+
         }
     }
 }

@@ -18,8 +18,8 @@ fun NavGraph(navController: NavHostController) {
     ) {
         composable(Screen.Login.route) {
             LoginScreen(
-                onIrARegiclearstro = { navController.navigate(Screen.Registro.route) },
-                onIrARecuperar = { navController.navigate(Screen.Recuperar.route) }
+                onIrARegistro  = { navController.navigate(Screen.Registro.route) },
+                onIrARecuperar  = { navController.navigate(Screen.Recuperar.route) }
             )
         }
 
