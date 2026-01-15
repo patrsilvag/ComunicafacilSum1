@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.psilva.comunicafacil.ui.screens.HomeScreen
 import com.psilva.comunicafacil.ui.screens.LoginScreen
 import com.psilva.comunicafacil.ui.screens.RecoverScreen
 import com.psilva.comunicafacil.ui.screens.RegisterScreen
@@ -35,6 +36,10 @@ fun NavGraph(navController: NavHostController, usuariosViewModel: UsuariosViewMo
             RecoverScreen(
                 onVolverLogin = { navController.popBackStack() }
             )
+            composable(Screen.Home.route) {
+                HomeScreen()
+            }
+
         }
     }
 }
