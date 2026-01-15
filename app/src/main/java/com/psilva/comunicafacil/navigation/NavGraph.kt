@@ -26,7 +26,8 @@ fun NavGraph(navController: NavHostController, usuariosViewModel: UsuariosViewMo
 
         composable(Screen.Registro.route) {
             RegisterScreen(
-                onVolverLogin = { navController.popBackStack() }
+                onVolverLogin = { navController.popBackStack() },
+                usuariosViewModel = usuariosViewModel
             )
         }
 

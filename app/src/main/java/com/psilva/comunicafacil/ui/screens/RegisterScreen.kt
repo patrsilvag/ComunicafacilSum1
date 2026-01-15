@@ -16,9 +16,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.window.PopupProperties
 
+import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
+import com.psilva.comunicafacil.model.Usuario
+import kotlinx.coroutines.launch
+import com.psilva.comunicafacil.viewmodel.ResultadoRegistro
+
 
 @Composable
-fun RegisterScreen(onVolverLogin: () -> Unit) {
+fun RegisterScreen(onVolverLogin: () -> Unit,
+                   usuariosViewModel: UsuariosViewModel) {
 
     // --- VARIABLES DE ESTADO ---
     var correo by remember { mutableStateOf("") }
@@ -37,6 +43,8 @@ fun RegisterScreen(onVolverLogin: () -> Unit) {
     var aceptaTerminos by remember { mutableStateOf(false) }
 
     val estadoSnackbar = remember { SnackbarHostState() }
+
+    val alcance = rememberCoroutineScope()
 
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = estadoSnackbar) }
@@ -145,6 +153,47 @@ fun RegisterScreen(onVolverLogin: () -> Unit) {
                 )
                 Text(text = "Acepto los términos y condiciones")
             }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Button(
+                onClick = {
+                    alcance.launch {
+                        val usuarioNuevo = Usuario(
+                            correo = correo,
+                            clave = clave,
+                            tipoUsuario = tipoSeleccionado,
+                            aceptaTerminos = aceptaTerminos,
+                            preferencia = preferenciaSeleccionada
+                        )
+
+                        val resultado = usuariosViewModel.registrarUsuario(usuarioNuevo)
+
+                        when (resultado) {
+                            is ResultadoRegistro.Ok -> {
+                                estadoSnackbar.showSnackbar(resultado.mensaje)
+                                // Limpieza básica (opcional, pero recomendable)
+                                correo = ""
+                                clave = ""
+                                aceptaTerminos = false
+                                preferenciaSeleccionada = opcionesPreferencia.first()
+                                tipoSeleccionado = tiposUsuario.first()
+                            }
+                            is ResultadoRegistro.Error -> {
+                                estadoSnackbar.showSnackbar(resultado.mensaje)
+                            }
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+            ) {
+                Text("Registrar")
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
             Button(
                 onClick = { onVolverLogin() },
                 modifier = Modifier
