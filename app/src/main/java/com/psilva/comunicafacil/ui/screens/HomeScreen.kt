@@ -5,9 +5,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Button
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -59,13 +61,23 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Text(
-            text = if (mensajeMostrado.isBlank())
-                "Aquí aparecerá el mensaje para comunicar."
-            else
-                mensajeMostrado,
-            style = MaterialTheme.typography.bodyLarge
-        )
+        Surface(
+            tonalElevation = 2.dp,
+            shape = MaterialTheme.shapes.medium,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = if (mensajeMostrado.isBlank())
+                    "Aquí aparecerá el mensaje para comunicar."
+                else
+                    mensajeMostrado,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+
+
 
         Spacer(modifier = Modifier.height(24.dp))
 
