@@ -77,8 +77,6 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
             )
         }
 
-
-
         Spacer(modifier = Modifier.height(24.dp))
 
         OutlinedButton(
