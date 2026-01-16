@@ -2,19 +2,14 @@ package com.psilva.comunicafacil.ui.screens
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.psilva.comunicafacil.ui.components.EmailField
+import com.psilva.comunicafacil.ui.components.PasswordField
 import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
 import kotlinx.coroutines.launch
 
@@ -50,57 +45,27 @@ fun LoginScreen(onIrARegistro: () -> Unit,
                 modifier = Modifier.padding(bottom = 24.dp)
             )
 
-            OutlinedTextField(
+            EmailField(
                 value = correo,
                 onValueChange = { correo = it },
-                label = { Text("Correo electrónico") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Email,
-                    imeAction = ImeAction.Next
-                )
+                imeAction = ImeAction.Next,
+                modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
+            PasswordField(
                 value = clave,
                 onValueChange = { clave = it },
-                label = { Text("Contraseña") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                visualTransformation = if (claveVisible) {
-                    VisualTransformation.None
-                } else {
-                    PasswordVisualTransformation()
-                },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Password,
-                    imeAction = ImeAction.Done
-                ),
-                trailingIcon = {
-                    val descripcion = if (claveVisible) {
-                        "Ocultar contraseña"
-                    } else {
-                        "Mostrar contraseña"
-                    }
-
-                    IconButton(onClick = { claveVisible = !claveVisible }) {
-                        Icon(
-                            imageVector = if (claveVisible) {
-                                Icons.Filled.VisibilityOff
-                            } else {
-                                Icons.Filled.Visibility
-                            },
-                            contentDescription = descripcion
-                        )
-                    }
-                }
+                visible = claveVisible,
+                onToggleVisible = { claveVisible = !claveVisible },
+                imeAction = ImeAction.Done,
+                modifier = Modifier.fillMaxWidth()
             )
 
 
             Spacer(modifier = Modifier.height(24.dp))
+
             Button(
                 onClick = {
                     alcance.launch {
