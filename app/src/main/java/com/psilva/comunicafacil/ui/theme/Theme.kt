@@ -13,29 +13,57 @@ import androidx.compose.ui.platform.LocalContext
 private val LightColorScheme = lightColorScheme(
     primary = AppPrimary,
     onPrimary = AppOnPrimary,
+    primaryContainer = AppPrimaryContainer,
+    onPrimaryContainer = AppOnPrimaryContainer,
+
+    secondary = AppSecondary,
+    onSecondary = AppOnSecondary,
+    secondaryContainer = AppSecondaryContainer,
+    onSecondaryContainer = AppOnSecondaryContainer,
+
+    error = AppError,
+    onError = AppOnError,
+    errorContainer = AppErrorContainer,
+    onErrorContainer = AppOnErrorContainer,
+
     background = AppBackground,
     onBackground = AppOnBackground,
+
     surface = AppSurface,
     onSurface = AppOnSurface,
+
     outline = AppOutline
 )
 
-// Si no usas modo oscuro, esto puede ser igual al light sin problema funcional.
-// Lo dejo igual para mantener “solo lo necesario” y no inventar paleta dark.
 private val DarkColorScheme = darkColorScheme(
     primary = AppPrimary,
     onPrimary = AppOnPrimary,
+    primaryContainer = AppPrimaryContainer,
+    onPrimaryContainer = AppOnPrimaryContainer,
+
+    secondary = AppSecondary,
+    onSecondary = AppOnSecondary,
+    secondaryContainer = AppSecondaryContainer,
+    onSecondaryContainer = AppOnSecondaryContainer,
+
+    error = AppError,
+    onError = AppOnError,
+    errorContainer = AppErrorContainer,
+    onErrorContainer = AppOnErrorContainer,
+
     background = AppBackground,
     onBackground = AppOnBackground,
+
     surface = AppSurface,
     onSurface = AppOnSurface,
+
     outline = AppOutline
 )
 
 @Composable
 fun ComunicafacilTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false, // clave para mantener contraste/branding estable
+    dynamicColor: Boolean = false, // Mantiene accesibilidad/contraste estable
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
