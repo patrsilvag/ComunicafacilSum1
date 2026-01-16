@@ -45,18 +45,30 @@ fun LoginScreen(onIrARegistro: () -> Unit,
         ) {
             Card(
                 modifier = Modifier
-                    .size(140.dp)
-                    .padding(bottom = 16.dp),
-                shape = RoundedCornerShape(20.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+                    .width(280.dp)
+                    .height(140.dp)
+                    .padding(bottom = 20.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.logo),
-                    contentDescription = "Logo ComunicaFácil",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.logo),
+                        contentDescription = "Logo ComunicaFácil",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .fillMaxSize()
+                    )
+                }
             }
+
 
             Text(
                 text = "Iniciar sesión",
@@ -114,24 +126,25 @@ fun LoginScreen(onIrARegistro: () -> Unit,
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
+                    .height(48.dp)
             ) {
                 Text("Ingresar")
             }
 
 
-
+            Spacer(modifier = Modifier.height(24.dp))
             Text(
                 text = "Crear cuenta",
                 modifier = Modifier
-                    .padding(top = 12.dp)
                     .clickable { onIrARegistro() }
+                    .heightIn(min = 48.dp)
             )
 
             Text(
                 text = "¿Olvidaste tu contraseña?",
                 modifier = Modifier
                     .padding(top = 8.dp)
+                    .heightIn(min = 58.dp)
                     .clickable { onIrARecuperar() }
             )
 
