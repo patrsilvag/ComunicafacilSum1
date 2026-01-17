@@ -13,8 +13,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.psilva.comunicafacil.R
+import com.psilva.comunicafacil.ui.components.AppSnackbarHost
 import com.psilva.comunicafacil.ui.components.EmailField
 import com.psilva.comunicafacil.ui.components.PasswordField
+import com.psilva.comunicafacil.ui.components.TipoMensaje
 import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
 import kotlinx.coroutines.launch
 
@@ -35,6 +37,7 @@ fun LoginScreen(
 
     val estadoSnackbar = remember { SnackbarHostState() }
     val alcance = rememberCoroutineScope()
+    var tipoMensaje by remember { mutableStateOf(TipoMensaje.INFO) }
 
     fun validarCampos(): Boolean {
         var ok = true
@@ -57,7 +60,7 @@ fun LoginScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = estadoSnackbar) }
+        snackbarHost = { AppSnackbarHost(hostState = estadoSnackbar, tipoMensaje = tipoMensaje) }
     ) { paddingInterior ->
         Column(
             modifier = Modifier
@@ -67,6 +70,7 @@ fun LoginScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
             Card(
                 modifier = Modifier
                     .width(280.dp)
@@ -101,7 +105,10 @@ fun LoginScreen(
 
             EmailField(
                 value = correo,
-                onValueChange = { correo = it; errorCorreo = null },
+                onValueChange = {
+                    correo = it
+                    errorCorreo = null
+                },
                 imeAction = ImeAction.Next,
                 modifier = Modifier.fillMaxWidth(),
                 isError = errorCorreo != null,
@@ -112,7 +119,10 @@ fun LoginScreen(
 
             PasswordField(
                 value = clave,
-                onValueChange = { clave = it; errorClave = null },
+                onValueChange = {
+                    clave = it
+                    errorClave = null
+                },
                 visible = claveVisible,
                 onToggleVisible = { claveVisible = !claveVisible },
                 imeAction = ImeAction.Done,
@@ -125,7 +135,7 @@ fun LoginScreen(
 
             Button(
                 onClick = {
-                    // limpia errores anteriores antes de validar
+                    // Limpia errores anteriores antes de validar
                     errorCorreo = null
                     errorClave = null
 
@@ -133,13 +143,16 @@ fun LoginScreen(
 
                     alcance.launch {
                         val ok = usuariosViewModel.validarLogin(correo.trim(), clave)
+
                         if (ok) {
+                            tipoMensaje = TipoMensaje.EXITO
                             estadoSnackbar.showSnackbar(
                                 message = "Acceso permitido",
                                 duration = SnackbarDuration.Short
                             )
                             onLoginExitoso()
                         } else {
+                            tipoMensaje = TipoMensaje.ERROR
                             estadoSnackbar.showSnackbar(
                                 message = "Correo o contraseña incorrectos",
                                 duration = SnackbarDuration.Long

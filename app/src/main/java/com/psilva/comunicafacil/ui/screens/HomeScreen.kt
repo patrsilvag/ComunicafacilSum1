@@ -11,6 +11,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 @Composable
@@ -18,6 +19,13 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
 
     var mensajeIngreso by remember { mutableStateOf("") }
     var mensajeMostrado by remember { mutableStateOf("") }
+
+    // ✅ Error persistente para el input
+    var errorMensaje by remember { mutableStateOf<String?>(null) }
+
+    // Snackbar para feedback global (TTS no listo, etc.)
+    val estadoSnackbar = remember { SnackbarHostState() }
+    val alcance = rememberCoroutineScope()
 
     // --- TTS ---
     val context = LocalContext.current
@@ -43,9 +51,33 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
         }
     }
 
+    fun validarMensaje(): Boolean {
+        val texto = mensajeIngreso.trim()
+        return if (texto.isBlank()) {
+            errorMensaje = "Escriba un mensaje antes de mostrarlo"
+            false
+        } else true
+    }
+
+    fun mostrarMensaje() {
+        errorMensaje = null
+        if (!validarMensaje()) return
+        mensajeMostrado = mensajeIngreso.trim()
+    }
+
     fun hablarMensaje() {
         val texto = mensajeMostrado.trim()
-        if (texto.isBlank() || !ttsListo) return
+        if (texto.isBlank()) return
+
+        if (!ttsListo) {
+            alcance.launch {
+                estadoSnackbar.showSnackbar(
+                    message = "TTS no disponible en este dispositivo/emulador",
+                    duration = SnackbarDuration.Long
+                )
+            }
+            return
+        }
 
         tts.value?.stop()
         tts.value?.speak(
@@ -56,90 +88,101 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
         )
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = estadoSnackbar) }
+    ) { paddingInterior ->
 
-        Text(
-            text = "Comunicador",
-            style = MaterialTheme.typography.headlineMedium
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        OutlinedTextField(
-            value = mensajeIngreso,
-            onValueChange = { mensajeIngreso = it },
-            label = { Text("Escribe tu mensaje") },
-            modifier = Modifier.fillMaxWidth(),
-            minLines = 3,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Default
-            )
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = {
-                mensajeMostrado = mensajeIngreso.trim()
-            },
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
-        ) {
-            Text("Mostrar")
-        }
-
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = "Mensaje mostrado:",
-            style = MaterialTheme.typography.titleMedium
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Surface(
-            tonalElevation = 2.dp,
-            shape = MaterialTheme.shapes.medium,
-            modifier = Modifier.fillMaxWidth()
+                .fillMaxSize()
+                .padding(paddingInterior)
+                .padding(16.dp)
         ) {
             Text(
-                text = if (mensajeMostrado.isBlank())
-                    "Aquí aparecerá el mensaje para comunicar."
-                else
-                    mensajeMostrado,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(16.dp)
+                text = "Comunicador",
+                style = MaterialTheme.typography.headlineMedium
             )
-        }
-        Spacer(modifier = Modifier.height(12.dp))
 
-        //  Botón TTS
-        Button(
-            onClick = { hablarMensaje() },
-            enabled = ttsListo && mensajeMostrado.isNotBlank(),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
-        ) {
-            Text("Hablar")
-        }
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-        OutlinedButton(
-            onClick = { onCerrarSesion() },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
-        ) {
-            Text("Cerrar sesión")
+            OutlinedTextField(
+                value = mensajeIngreso,
+                onValueChange = {
+                    mensajeIngreso = it
+                    errorMensaje = null
+                },
+                label = { Text("Escribe tu mensaje") },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 3,
+                isError = errorMensaje != null,
+                supportingText = {
+                    if (errorMensaje != null) Text(errorMensaje!!)
+                },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Default
+                )
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = { mostrarMensaje() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+            ) {
+                Text("Mostrar")
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Mensaje mostrado:",
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Surface(
+                tonalElevation = 2.dp,
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = if (mensajeMostrado.isBlank())
+                        "Aquí aparecerá el mensaje para comunicar."
+                    else
+                        mensajeMostrado,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // ✅ Acción principal: hablar el mensaje mostrado
+            Button(
+                onClick = { hablarMensaje() },
+                enabled = mensajeMostrado.isNotBlank(), // ttsListo se maneja con snackbar si falla
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+            ) {
+                Text("Hablar")
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            OutlinedButton(
+                onClick = { onCerrarSesion() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+            ) {
+                Text("Cerrar sesión")
+            }
         }
     }
 }

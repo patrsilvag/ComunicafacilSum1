@@ -34,3 +34,13 @@ val AppOnErrorContainer = Color(0xFF410002)
 
 // --- Bordes (OutlinedTextField) ---
 val AppOutline = Color(0xFF808A96)
+
+// --- Snackbars semánticos (Éxito / Info / Error) ---
+val AppSuccessContainer = Color(0xFFD1E7DD)      // verde suave
+val AppOnSuccessContainer = Color(0xFF0F5132)    // verde oscuro
+
+val AppInfoContainer = Color(0xFFE7F1FF)         // azul claro
+val AppOnInfoContainer = Color(0xFF084298)       // azul oscuro
+
+val AppErrorContainerCustom = Color(0xFFF8D7DA)  // rojo suave (custom para snackbar)
+val AppOnErrorContainerCustom = Color(0xFF842029)

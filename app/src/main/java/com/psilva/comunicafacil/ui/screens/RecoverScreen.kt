@@ -2,32 +2,43 @@ package com.psilva.comunicafacil.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import kotlinx.coroutines.launch
 import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
-
+import kotlinx.coroutines.launch
 
 @Composable
-fun RecoverScreen(onVolverLogin: () -> Unit,
-                  usuariosViewModel: UsuariosViewModel) {
-
+fun RecoverScreen(
+    onVolverLogin: () -> Unit,
+    usuariosViewModel: UsuariosViewModel
+) {
     var correo by remember { mutableStateOf("") }
+
+    // ✅ Error persistente
+    var errorCorreo by remember { mutableStateOf<String?>(null) }
 
     val estadoSnackbar = remember { SnackbarHostState() }
     val alcance = rememberCoroutineScope()
+
+    fun validarCorreo(): Boolean {
+        val correoTrim = correo.trim()
+
+        return when {
+            correoTrim.isBlank() -> {
+                errorCorreo = "El correo es obligatorio"
+                false
+            }
+            !correoTrim.contains("@") -> {
+                errorCorreo = "Ingrese un correo válido"
+                false
+            }
+            else -> true
+        }
+    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = estadoSnackbar) }
@@ -39,7 +50,6 @@ fun RecoverScreen(onVolverLogin: () -> Unit,
                 .padding(16.dp)
                 .fillMaxSize()
         ) {
-
             Text(
                 text = "Recuperar contraseña",
                 style = MaterialTheme.typography.headlineMedium
@@ -49,10 +59,17 @@ fun RecoverScreen(onVolverLogin: () -> Unit,
 
             OutlinedTextField(
                 value = correo,
-                onValueChange = { correo = it },
+                onValueChange = {
+                    correo = it
+                    errorCorreo = null
+                },
                 label = { Text("Correo electrónico") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
+                isError = errorCorreo != null,
+                supportingText = {
+                    if (errorCorreo != null) Text(errorCorreo!!)
+                },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Email,
                     imeAction = ImeAction.Done
@@ -63,32 +80,31 @@ fun RecoverScreen(onVolverLogin: () -> Unit,
 
             Button(
                 onClick = {
+                    // Limpia error previo y valida
+                    errorCorreo = null
+                    if (!validarCorreo()) return@Button
+
                     alcance.launch {
-                        when {
-                            correo.isBlank() ->
-                                estadoSnackbar.showSnackbar("Ingrese su correo")
-
-                            !correo.contains("@") ->
-                                estadoSnackbar.showSnackbar("Ingrese un correo válido")
-
-                            else -> {
-                                val existe = usuariosViewModel.existeCorreo(correo)
-                                if (existe) {
-                                    estadoSnackbar.showSnackbar("Correo encontrado. Recuperación simulada")
-                                } else {
-                                    estadoSnackbar.showSnackbar("Correo no registrado")
-                                }
-                            }
+                        val existe = usuariosViewModel.existeCorreo(correo.trim())
+                        if (existe) {
+                            estadoSnackbar.showSnackbar(
+                                message = "Correo encontrado. Recuperación simulada",
+                                duration = SnackbarDuration.Short
+                            )
+                        } else {
+                            estadoSnackbar.showSnackbar(
+                                message = "Correo no registrado",
+                                duration = SnackbarDuration.Long
+                            )
                         }
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
+                    .height(48.dp) // ✅ mínimo táctil
             ) {
                 Text("Enviar")
             }
-
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -96,11 +112,10 @@ fun RecoverScreen(onVolverLogin: () -> Unit,
                 onClick = { onVolverLogin() },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
+                    .height(48.dp) // ✅ mínimo táctil
             ) {
                 Text("Volver")
             }
-
         }
     }
 }
