@@ -21,6 +21,8 @@ import com.psilva.comunicafacil.ui.components.PasswordField
 import com.psilva.comunicafacil.viewmodel.ResultadoRegistro
 import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
 import kotlinx.coroutines.launch
+import com.psilva.comunicafacil.ui.components.AppSnackbarHost
+import com.psilva.comunicafacil.ui.components.TipoMensaje
 
 @Composable
 fun RegisterScreen(
@@ -49,6 +51,8 @@ fun RegisterScreen(
 
     val estadoSnackbar = remember { SnackbarHostState() }
     val alcance = rememberCoroutineScope()
+
+    var tipoMensaje by remember { mutableStateOf(TipoMensaje.INFO) }
 
     fun validarFormulario(): Boolean {
         var ok = true
@@ -102,6 +106,8 @@ fun RegisterScreen(
 
             when (resultado) {
                 is ResultadoRegistro.Ok -> {
+                    tipoMensaje = TipoMensaje.EXITO // Actualizamos el tipo antes
+                    // CORRECCIÓN AQUÍ:
                     estadoSnackbar.showSnackbar(
                         message = resultado.mensaje,
                         duration = SnackbarDuration.Short
@@ -116,17 +122,16 @@ fun RegisterScreen(
                 }
 
                 is ResultadoRegistro.Error -> {
-                    estadoSnackbar.showSnackbar(
-                        message = resultado.mensaje,
-                        duration = SnackbarDuration.Long
-                    )
+                    tipoMensaje = TipoMensaje.ERROR
+                    estadoSnackbar.showSnackbar(resultado.mensaje, duration = SnackbarDuration.Long)
+
                 }
             }
         }
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = estadoSnackbar) },
+        snackbarHost = { AppSnackbarHost(hostState = estadoSnackbar, tipoMensaje = tipoMensaje) },
         bottomBar = {
             Column(
                 modifier = Modifier

@@ -10,6 +10,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
 import kotlinx.coroutines.launch
+import com.psilva.comunicafacil.ui.components.AppSnackbarHost
+import com.psilva.comunicafacil.ui.components.TipoMensaje
+
 
 @Composable
 fun RecoverScreen(
@@ -18,11 +21,12 @@ fun RecoverScreen(
 ) {
     var correo by remember { mutableStateOf("") }
 
-    // ✅ Error persistente
+    // Error persistente
     var errorCorreo by remember { mutableStateOf<String?>(null) }
 
     val estadoSnackbar = remember { SnackbarHostState() }
     val alcance = rememberCoroutineScope()
+    var tipoMensaje by remember { mutableStateOf(TipoMensaje.INFO) }
 
     fun validarCorreo(): Boolean {
         val correoTrim = correo.trim()
@@ -41,7 +45,8 @@ fun RecoverScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = estadoSnackbar) }
+        snackbarHost = { AppSnackbarHost(hostState = estadoSnackbar, tipoMensaje = tipoMensaje) }
+
     ) { paddingInterior ->
 
         Column(
@@ -87,10 +92,9 @@ fun RecoverScreen(
                     alcance.launch {
                         val existe = usuariosViewModel.existeCorreo(correo.trim())
                         if (existe) {
-                            estadoSnackbar.showSnackbar(
-                                message = "Correo encontrado. Recuperación simulada",
-                                duration = SnackbarDuration.Short
-                            )
+                            tipoMensaje = TipoMensaje.EXITO
+                            estadoSnackbar.showSnackbar("Correo encontrado. Recuperación simulada", duration = SnackbarDuration.Short)
+
                         } else {
                             estadoSnackbar.showSnackbar(
                                 message = "Correo no registrado",

@@ -13,6 +13,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import java.util.Locale
+import com.psilva.comunicafacil.ui.components.AppSnackbarHost
+import com.psilva.comunicafacil.ui.components.TipoMensaje
 
 @Composable
 fun HomeScreen(onCerrarSesion: () -> Unit) {
@@ -31,6 +33,8 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
     val context = LocalContext.current
     var ttsListo by remember { mutableStateOf(false) }
     val tts = remember { mutableStateOf<TextToSpeech?>(null) }
+    var tipoMensaje by remember { mutableStateOf(TipoMensaje.INFO) }
+
 
     DisposableEffect(Unit) {
         tts.value = TextToSpeech(context) { status ->
@@ -71,10 +75,12 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
 
         if (!ttsListo) {
             alcance.launch {
+                tipoMensaje = TipoMensaje.INFO
                 estadoSnackbar.showSnackbar(
                     message = "TTS no disponible en este dispositivo/emulador",
                     duration = SnackbarDuration.Long
                 )
+
             }
             return
         }
@@ -89,7 +95,8 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = estadoSnackbar) }
+        snackbarHost = { AppSnackbarHost(hostState = estadoSnackbar, tipoMensaje = tipoMensaje) }
+
     ) { paddingInterior ->
 
         Column(
