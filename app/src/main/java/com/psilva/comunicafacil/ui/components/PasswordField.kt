@@ -1,6 +1,5 @@
 package com.psilva.comunicafacil.ui.components
 
-
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
@@ -23,7 +22,9 @@ fun PasswordField(
     visible: Boolean,
     onToggleVisible: () -> Unit,
     imeAction: ImeAction,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isError: Boolean = false,
+    supportingText: String? = null
 ) {
     OutlinedTextField(
         value = value,
@@ -31,6 +32,12 @@ fun PasswordField(
         label = { Text("Contraseña") },
         modifier = modifier,
         singleLine = true,
+        isError = isError,
+        supportingText = {
+            if (!supportingText.isNullOrBlank()) {
+                Text(supportingText)
+            }
+        },
         visualTransformation = if (visible)
             VisualTransformation.None
         else

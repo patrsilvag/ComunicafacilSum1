@@ -12,29 +12,53 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import com.psilva.comunicafacil.R
 import com.psilva.comunicafacil.ui.components.EmailField
 import com.psilva.comunicafacil.ui.components.PasswordField
 import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
 import kotlinx.coroutines.launch
-import com.psilva.comunicafacil.R
 
 @Composable
-fun LoginScreen(onIrARegistro: () -> Unit,
-                onIrARecuperar: () -> Unit,
-                onLoginExitoso: () -> Unit,
-                usuariosViewModel: UsuariosViewModel) {
-
+fun LoginScreen(
+    onIrARegistro: () -> Unit,
+    onIrARecuperar: () -> Unit,
+    onLoginExitoso: () -> Unit,
+    usuariosViewModel: UsuariosViewModel
+) {
     var correo by remember { mutableStateOf("") }
     var clave by remember { mutableStateOf("") }
     var claveVisible by remember { mutableStateOf(false) }
 
+    // Feedback persistente por campo
+    var errorCorreo by remember { mutableStateOf<String?>(null) }
+    var errorClave by remember { mutableStateOf<String?>(null) }
+
     val estadoSnackbar = remember { SnackbarHostState() }
     val alcance = rememberCoroutineScope()
+
+    fun validarCampos(): Boolean {
+        var ok = true
+        val correoTrim = correo.trim()
+
+        if (correoTrim.isBlank()) {
+            errorCorreo = "El correo es obligatorio"
+            ok = false
+        } else if (!correoTrim.contains("@")) {
+            errorCorreo = "Ingrese un correo válido"
+            ok = false
+        }
+
+        if (clave.isBlank()) {
+            errorClave = "La contraseña es obligatoria"
+            ok = false
+        }
+
+        return ok
+    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = estadoSnackbar) }
     ) { paddingInterior ->
-
         Column(
             modifier = Modifier
                 .padding(paddingInterior)
@@ -69,7 +93,6 @@ fun LoginScreen(onIrARegistro: () -> Unit,
                 }
             }
 
-
             Text(
                 text = "Iniciar sesión",
                 style = MaterialTheme.typography.headlineMedium,
@@ -78,49 +101,49 @@ fun LoginScreen(onIrARegistro: () -> Unit,
 
             EmailField(
                 value = correo,
-                onValueChange = { correo = it },
+                onValueChange = { correo = it; errorCorreo = null },
                 imeAction = ImeAction.Next,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                isError = errorCorreo != null,
+                supportingText = errorCorreo
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             PasswordField(
                 value = clave,
-                onValueChange = { clave = it },
+                onValueChange = { clave = it; errorClave = null },
                 visible = claveVisible,
                 onToggleVisible = { claveVisible = !claveVisible },
                 imeAction = ImeAction.Done,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                isError = errorClave != null,
+                supportingText = errorClave
             )
-
 
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
                 onClick = {
-                    alcance.launch {
-                        when {
-                            correo.isBlank() || clave.isBlank() -> {
-                                estadoSnackbar.showSnackbar(
-                                    "Ingrese correo y contraseña"
-                                )
-                            }
-                            !correo.contains("@") -> {
-                                estadoSnackbar.showSnackbar(
-                                    "Ingrese un correo válido"
-                                )
-                            }
-                            usuariosViewModel.validarLogin(correo, clave) -> {
-                                estadoSnackbar.showSnackbar("Acceso permitido",duration = SnackbarDuration.Short)
-                                onLoginExitoso()
+                    // limpia errores anteriores antes de validar
+                    errorCorreo = null
+                    errorClave = null
 
-                            }
-                            else -> {
-                                estadoSnackbar.showSnackbar(
-                                    "Credenciales inválidas"
-                                )
-                            }
+                    if (!validarCampos()) return@Button
+
+                    alcance.launch {
+                        val ok = usuariosViewModel.validarLogin(correo.trim(), clave)
+                        if (ok) {
+                            estadoSnackbar.showSnackbar(
+                                message = "Acceso permitido",
+                                duration = SnackbarDuration.Short
+                            )
+                            onLoginExitoso()
+                        } else {
+                            estadoSnackbar.showSnackbar(
+                                message = "Correo o contraseña incorrectos",
+                                duration = SnackbarDuration.Long
+                            )
                         }
                     }
                 },
@@ -131,8 +154,8 @@ fun LoginScreen(onIrARegistro: () -> Unit,
                 Text("Ingresar")
             }
 
-
             Spacer(modifier = Modifier.height(24.dp))
+
             Text(
                 text = "Crear cuenta",
                 modifier = Modifier
@@ -144,10 +167,9 @@ fun LoginScreen(onIrARegistro: () -> Unit,
                 text = "¿Olvidaste tu contraseña?",
                 modifier = Modifier
                     .padding(top = 8.dp)
-                    .heightIn(min = 58.dp)
+                    .heightIn(min = 48.dp)
                     .clickable { onIrARecuperar() }
             )
-
         }
     }
 }

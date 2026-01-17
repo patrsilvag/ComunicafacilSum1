@@ -121,7 +121,7 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
         }
         Spacer(modifier = Modifier.height(12.dp))
 
-        // 🔊 Botón TTS
+        //  Botón TTS
         Button(
             onClick = { hablarMensaje() },
             enabled = ttsListo && mensajeMostrado.isNotBlank(),
