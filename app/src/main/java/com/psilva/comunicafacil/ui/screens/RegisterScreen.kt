@@ -1,8 +1,15 @@
 package com.psilva.comunicafacil.ui.screens
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -11,75 +18,126 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.window.PopupProperties
-
-import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
-import com.psilva.comunicafacil.model.Usuario
-import kotlinx.coroutines.launch
-import com.psilva.comunicafacil.viewmodel.ResultadoRegistro
-
-
 import androidx.compose.ui.text.style.TextOverflow
-
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupProperties
+import com.psilva.comunicafacil.model.Usuario
+import com.psilva.comunicafacil.viewmodel.ResultadoRegistro
+import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
+import kotlinx.coroutines.launch
 
 @Composable
-fun RegisterScreen(onVolverLogin: () -> Unit,
-                   usuariosViewModel: UsuariosViewModel) {
-
+fun RegisterScreen(
+    onVolverLogin: () -> Unit,
+    usuariosViewModel: UsuariosViewModel
+) {
     // --- VARIABLES DE ESTADO ---
     var correo by remember { mutableStateOf("") }
     var clave by remember { mutableStateOf("") }
     var claveVisible by remember { mutableStateOf(false) }
 
-    // Estado para Dropdown (Tipo de Usuario)
+    // Dropdown (Tipo de Usuario)
     val tiposUsuario = listOf("Estudiante", "Docente", "Apoderado")
     var tipoSeleccionado by remember { mutableStateOf(tiposUsuario.first()) }
     var menuAbierto by remember { mutableStateOf(false) }
 
-    // Estado para RadioButtons (Preferencia)
+    // RadioButtons (Preferencia)
     val opcionesPreferencia = listOf("Lectura Normal", "Lectura Aumentada")
     var preferenciaSeleccionada by remember { mutableStateOf(opcionesPreferencia.first()) }
 
-    // Estado para Checkbox
+    // Checkbox
     var aceptaTerminos by remember { mutableStateOf(false) }
 
     val estadoSnackbar = remember { SnackbarHostState() }
-
     val alcance = rememberCoroutineScope()
 
+    fun registrar() {
+        alcance.launch {
+            val usuarioNuevo = Usuario(
+                correo = correo,
+                clave = clave,
+                tipoUsuario = tipoSeleccionado,
+                aceptaTerminos = aceptaTerminos,
+                preferencia = preferenciaSeleccionada
+            )
+
+            val resultado = usuariosViewModel.registrarUsuario(usuarioNuevo)
+
+            when (resultado) {
+                is ResultadoRegistro.Ok -> {
+                    estadoSnackbar.showSnackbar(resultado.mensaje)
+
+                    // Limpieza básica
+                    correo = ""
+                    clave = ""
+                    aceptaTerminos = false
+                    preferenciaSeleccionada = opcionesPreferencia.first()
+                    tipoSeleccionado = tiposUsuario.first()
+                }
+                is ResultadoRegistro.Error -> {
+                    estadoSnackbar.showSnackbar(resultado.mensaje)
+                }
+            }
+        }
+    }
+
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = estadoSnackbar) }
+        snackbarHost = { SnackbarHost(hostState = estadoSnackbar) },
+        bottomBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Button(
+                    onClick = { registrar() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                ) {
+                    Text("Registrar")
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedButton(
+                    onClick = { onVolverLogin() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                ) {
+                    Text("Volver")
+                }
+            }
+        }
     ) { paddingInterior ->
         val scrollEstado = rememberScrollState()
+
         Column(
             modifier = Modifier
-                .padding(paddingInterior)
-                .padding(16.dp)
                 .fillMaxSize()
+                .padding(paddingInterior)          // ✅ respeta bottomBar / barras del sistema
+                .padding(horizontal = 16.dp)
                 .verticalScroll(scrollEstado)
         ) {
-
             Text(
                 text = "Registro de usuario",
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            // 1. INPUTS (Ya los tenías)
+            // 1. INPUTS
             OutlinedTextField(
                 value = correo,
                 onValueChange = { correo = it },
                 label = { Text("Correo electrónico") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next)
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next
+                )
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -100,11 +158,8 @@ fun RegisterScreen(onVolverLogin: () -> Unit,
                     imeAction = ImeAction.Done
                 ),
                 trailingIcon = {
-                    val descripcion = if (claveVisible) {
-                        "Ocultar contraseña"
-                    } else {
-                        "Mostrar contraseña"
-                    }
+                    val descripcion =
+                        if (claveVisible) "Ocultar contraseña" else "Mostrar contraseña"
 
                     IconButton(onClick = { claveVisible = !claveVisible }) {
                         Icon(
@@ -121,13 +176,12 @@ fun RegisterScreen(onVolverLogin: () -> Unit,
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 2. DROPDOWN (Combo Box)
+            // 2. DROPDOWN (Tipo de Usuario)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { menuAbierto = true } // el click lo captura el contenedor
+                    .clickable { menuAbierto = true }
             ) {
-
                 OutlinedTextField(
                     value = tipoSeleccionado,
                     onValueChange = {},
@@ -155,7 +209,6 @@ fun RegisterScreen(onVolverLogin: () -> Unit,
                 }
             }
 
-
             Spacer(modifier = Modifier.height(20.dp))
 
             // 3. RADIO BUTTONS
@@ -164,7 +217,9 @@ fun RegisterScreen(onVolverLogin: () -> Unit,
             opcionesPreferencia.forEach { opcion ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
                 ) {
                     RadioButton(
                         selected = (opcion == preferenciaSeleccionada),
@@ -190,6 +245,7 @@ fun RegisterScreen(onVolverLogin: () -> Unit,
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Tabla usuarios
             Text(
                 text = "Usuarios registrados (${usuariosViewModel.usuarios.size}/5)",
                 style = MaterialTheme.typography.titleMedium
@@ -197,111 +253,99 @@ fun RegisterScreen(onVolverLogin: () -> Unit,
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Encabezado tipo tabla
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(
+                        1.dp,
+                        MaterialTheme.colorScheme.outline,
+                        MaterialTheme.shapes.medium
+                    ),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                shape = MaterialTheme.shapes.medium
             ) {
-                Text(
-                    text = "Correo",
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "Tipo",
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+                Column(modifier = Modifier.fillMaxWidth()) {
 
-            Spacer(modifier = Modifier.height(6.dp))
-
-            // Filas
-            if (usuariosViewModel.usuarios.isEmpty()) {
-                Text(
-                    text = "Aún no hay usuarios registrados.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            } else {
-                usuariosViewModel.usuarios.forEach { usuario ->
+                    // Encabezado
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 6.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            .background(MaterialTheme.colorScheme.primaryContainer)
+                            .padding(horizontal = 12.dp, vertical = 10.dp)
                     ) {
                         Text(
-                            text = usuario.correo,
+                            text = "Correo",
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
                             modifier = Modifier.weight(1f),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = usuario.tipoUsuario,
+                            text = "Tipo",
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
                             modifier = Modifier.weight(1f),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
-                    HorizontalDivider()
-                }
-            }
 
-            Spacer(modifier = Modifier.height(20.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline)
 
-            Button(
-                onClick = {
-                    alcance.launch {
-                        val usuarioNuevo = Usuario(
-                            correo = correo,
-                            clave = clave,
-                            tipoUsuario = tipoSeleccionado,
-                            aceptaTerminos = aceptaTerminos,
-                            preferencia = preferenciaSeleccionada
+                    if (usuariosViewModel.usuarios.isEmpty()) {
+                        Text(
+                            text = "Aún no hay usuarios registrados.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(12.dp)
                         )
+                    } else {
+                        usuariosViewModel.usuarios.forEachIndexed { index, usuario ->
 
-                        val resultado = usuariosViewModel.registrarUsuario(usuarioNuevo)
+                            val rowBg =
+                                if (index % 2 == 0) MaterialTheme.colorScheme.surface
+                                else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.20f)
 
-                        when (resultado) {
-                            is ResultadoRegistro.Ok -> {
-                                estadoSnackbar.showSnackbar(resultado.mensaje)
-                                // Limpieza básica (opcional, pero recomendable)
-                                correo = ""
-                                clave = ""
-                                aceptaTerminos = false
-                                preferenciaSeleccionada = opcionesPreferencia.first()
-                                tipoSeleccionado = tiposUsuario.first()
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(rowBg)
+                                    .padding(horizontal = 12.dp, vertical = 10.dp)
+                            ) {
+                                Text(
+                                    text = usuario.correo,
+                                    modifier = Modifier.weight(1f),
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = usuario.tipoUsuario,
+                                    modifier = Modifier.weight(1f),
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
                             }
-                            is ResultadoRegistro.Error -> {
-                                estadoSnackbar.showSnackbar(resultado.mensaje)
+
+                            if (index < usuariosViewModel.usuarios.lastIndex) {
+                                HorizontalDivider(
+                                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
+                                )
                             }
                         }
                     }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-            ) {
-                Text("Registrar")
+                }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            OutlinedButton(
-                onClick = { onVolverLogin() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-            ) {
-                Text("Volver")
-            }
+            Spacer(modifier = Modifier.height(150.dp))
         }
-
     }
 }

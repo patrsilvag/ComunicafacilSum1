@@ -1,6 +1,7 @@
 package com.psilva.comunicafacil.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -10,6 +11,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -36,7 +39,11 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
             onValueChange = { mensajeIngreso = it },
             label = { Text("Escribe tu mensaje") },
             modifier = Modifier.fillMaxWidth(),
-            minLines = 3
+            minLines = 3,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Default
+                    )
         )
 
         Spacer(modifier = Modifier.height(16.dp))
