@@ -3,13 +3,20 @@ package com.psilva.comunicafacil.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -114,7 +121,7 @@ fun RegisterScreen(
                     clave = ""
                     aceptaTerminos = false
 
-                    // Restablece preferencia y tipografía global de forma consistente
+                    // Se restablece la preferencia de lectura y el escalado global de tipografía.
                     preferenciaSeleccionada = opcionesPreferencia.first()
                     onFontSizeModeChange(FontSizeMode.Normal)
 
@@ -222,25 +229,46 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            // Se presenta un selector desplegable para elegir el tipo de usuario, con indicador visual y descripción para TalkBack.
+            val tipoUsuarioInteraction = remember { MutableInteractionSource() }
+
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { menuAbierto = true }
+                modifier = Modifier.fillMaxWidth()
             ) {
                 OutlinedTextField(
                     value = tipoSeleccionado,
                     onValueChange = {},
                     label = { Text("Tipo de usuario") },
                     readOnly = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { menuAbierto = true },
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.ArrowDropDown,
+                            contentDescription = null
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
                     isError = errorTipoUsuario != null,
                     supportingText = {
                         if (errorTipoUsuario != null) Text(errorTipoUsuario!!)
                     }
                 )
 
+                // Se agrega una capa transparente para capturar el toque en toda el área, facilitando el uso para personas con discapacidad motora y TalkBack.
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .semantics {
+                            role = Role.Button
+                            contentDescription =
+                                "Tipo de usuario. Opción actual: $tipoSeleccionado. Doble toque para cambiar."
+                        }
+                        .clickable(
+                            interactionSource = tipoUsuarioInteraction,
+                            indication = null
+                        ) { menuAbierto = true }
+                )
+
+                // Se despliega un menú de opciones para seleccionar el tipo de usuario, cerrándose al elegir una opción o al perder foco.
                 DropdownMenu(
                     expanded = menuAbierto,
                     onDismissRequest = { menuAbierto = false },
@@ -263,6 +291,7 @@ fun RegisterScreen(
 
             Text("Accesibilidad Visual", style = MaterialTheme.typography.bodyMedium)
 
+            // Se muestran RadioButtons para elegir la preferencia de lectura y ajustar el tamaño de tipografía global.
             opcionesPreferencia.forEach { opcion ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -286,6 +315,7 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Se incorpora un Checkbox para confirmar aceptación de términos
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
@@ -333,7 +363,6 @@ fun RegisterScreen(
                 shape = MaterialTheme.shapes.medium
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
-
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
