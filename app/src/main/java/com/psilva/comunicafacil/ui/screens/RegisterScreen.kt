@@ -20,6 +20,7 @@ import com.psilva.comunicafacil.ui.components.AppSnackbarHost
 import com.psilva.comunicafacil.ui.components.EmailField
 import com.psilva.comunicafacil.ui.components.PasswordField
 import com.psilva.comunicafacil.ui.components.TipoMensaje
+import com.psilva.comunicafacil.ui.settings.FontSizeMode
 import com.psilva.comunicafacil.viewmodel.ResultadoRegistro
 import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
 import kotlinx.coroutines.launch
@@ -27,7 +28,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun RegisterScreen(
     onVolverLogin: () -> Unit,
-    usuariosViewModel: UsuariosViewModel
+    usuariosViewModel: UsuariosViewModel,
+    onFontSizeModeChange: (FontSizeMode) -> Unit
 ) {
     var correo by remember { mutableStateOf("") }
     var correoValido by remember { mutableStateOf(false) }
@@ -111,7 +113,11 @@ fun RegisterScreen(
                     correo = ""
                     clave = ""
                     aceptaTerminos = false
+
+                    // Restablece preferencia y tipografía global de forma consistente
                     preferenciaSeleccionada = opcionesPreferencia.first()
+                    onFontSizeModeChange(FontSizeMode.Normal)
+
                     tipoSeleccionado = tiposUsuario.first()
                 }
 
@@ -266,7 +272,13 @@ fun RegisterScreen(
                 ) {
                     RadioButton(
                         selected = (opcion == preferenciaSeleccionada),
-                        onClick = { preferenciaSeleccionada = opcion }
+                        onClick = {
+                            preferenciaSeleccionada = opcion
+                            onFontSizeModeChange(
+                                if (opcion == "Lectura Aumentada") FontSizeMode.Aumentada
+                                else FontSizeMode.Normal
+                            )
+                        }
                     )
                     Text(text = opcion, modifier = Modifier.padding(start = 8.dp))
                 }
