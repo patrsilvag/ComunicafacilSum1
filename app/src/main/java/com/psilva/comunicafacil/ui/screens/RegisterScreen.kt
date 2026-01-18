@@ -16,21 +16,22 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import com.psilva.comunicafacil.model.Usuario
+import com.psilva.comunicafacil.ui.components.AppSnackbarHost
 import com.psilva.comunicafacil.ui.components.EmailField
 import com.psilva.comunicafacil.ui.components.PasswordField
+import com.psilva.comunicafacil.ui.components.TipoMensaje
 import com.psilva.comunicafacil.viewmodel.ResultadoRegistro
 import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
 import kotlinx.coroutines.launch
-import com.psilva.comunicafacil.ui.components.AppSnackbarHost
-import com.psilva.comunicafacil.ui.components.TipoMensaje
 
 @Composable
 fun RegisterScreen(
     onVolverLogin: () -> Unit,
     usuariosViewModel: UsuariosViewModel
 ) {
-    // --- ESTADO ---
     var correo by remember { mutableStateOf("") }
+    var correoValido by remember { mutableStateOf(false) }
+
     var clave by remember { mutableStateOf("") }
     var claveVisible by remember { mutableStateOf(false) }
 
@@ -43,7 +44,6 @@ fun RegisterScreen(
 
     var aceptaTerminos by remember { mutableStateOf(false) }
 
-    // ✅ Errores persistentes
     var errorCorreo by remember { mutableStateOf<String?>(null) }
     var errorClave by remember { mutableStateOf<String?>(null) }
     var errorTipoUsuario by remember { mutableStateOf<String?>(null) }
@@ -51,7 +51,6 @@ fun RegisterScreen(
 
     val estadoSnackbar = remember { SnackbarHostState() }
     val alcance = rememberCoroutineScope()
-
     var tipoMensaje by remember { mutableStateOf(TipoMensaje.INFO) }
 
     fun validarFormulario(): Boolean {
@@ -61,7 +60,7 @@ fun RegisterScreen(
         if (correoTrim.isBlank()) {
             errorCorreo = "El correo es obligatorio"
             ok = false
-        } else if (!correoTrim.contains("@")) {
+        } else if (!correoValido) {
             errorCorreo = "Ingrese un correo válido"
             ok = false
         }
@@ -85,7 +84,6 @@ fun RegisterScreen(
     }
 
     fun registrar() {
-        // Limpia errores previos
         errorCorreo = null
         errorClave = null
         errorTipoUsuario = null
@@ -102,18 +100,14 @@ fun RegisterScreen(
                 preferencia = preferenciaSeleccionada
             )
 
-            val resultado = usuariosViewModel.registrarUsuario(usuarioNuevo)
-
-            when (resultado) {
+            when (val resultado = usuariosViewModel.registrarUsuario(usuarioNuevo)) {
                 is ResultadoRegistro.Ok -> {
-                    tipoMensaje = TipoMensaje.EXITO // Actualizamos el tipo antes
-                    // CORRECCIÓN AQUÍ:
+                    tipoMensaje = TipoMensaje.EXITO
                     estadoSnackbar.showSnackbar(
                         message = resultado.mensaje,
                         duration = SnackbarDuration.Short
                     )
 
-                    // Limpieza básica
                     correo = ""
                     clave = ""
                     aceptaTerminos = false
@@ -123,12 +117,20 @@ fun RegisterScreen(
 
                 is ResultadoRegistro.Error -> {
                     tipoMensaje = TipoMensaje.ERROR
-                    estadoSnackbar.showSnackbar(resultado.mensaje, duration = SnackbarDuration.Long)
-
+                    estadoSnackbar.showSnackbar(
+                        message = resultado.mensaje,
+                        duration = SnackbarDuration.Long
+                    )
                 }
             }
         }
     }
+
+    val formularioHabilitado =
+        correoValido &&
+                clave.isNotBlank() &&
+                tipoSeleccionado.isNotBlank() &&
+                aceptaTerminos
 
     Scaffold(
         snackbarHost = { AppSnackbarHost(hostState = estadoSnackbar, tipoMensaje = tipoMensaje) },
@@ -140,6 +142,7 @@ fun RegisterScreen(
             ) {
                 Button(
                     onClick = { registrar() },
+                    enabled = formularioHabilitado,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
@@ -150,7 +153,7 @@ fun RegisterScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 OutlinedButton(
-                    onClick = { onVolverLogin() },
+                    onClick = onVolverLogin,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
@@ -165,7 +168,7 @@ fun RegisterScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingInterior) // ✅ respeta bottomBar / sistema
+                .padding(paddingInterior)
                 .padding(horizontal = 16.dp)
                 .verticalScroll(scrollEstado)
         ) {
@@ -175,7 +178,6 @@ fun RegisterScreen(
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            // ✅ EmailField reutilizable + error persistente
             EmailField(
                 value = correo,
                 onValueChange = {
@@ -184,13 +186,20 @@ fun RegisterScreen(
                 },
                 imeAction = ImeAction.Next,
                 modifier = Modifier.fillMaxWidth(),
-                isError = errorCorreo != null,
-                supportingText = errorCorreo
+                onValidityChange = { correoValido = it }
             )
+
+            if (!errorCorreo.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = errorCorreo!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // ✅ PasswordField reutilizable + error persistente
             PasswordField(
                 value = clave,
                 onValueChange = {
@@ -207,7 +216,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Tipo de usuario (Dropdown) con error persistente
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -247,7 +255,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Preferencia (Radio)
             Text("Accesibilidad Visual", style = MaterialTheme.typography.bodyMedium)
 
             opcionesPreferencia.forEach { opcion ->
@@ -267,7 +274,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Términos (Checkbox) + error persistente
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
@@ -293,7 +299,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Tabla usuarios
             Text(
                 text = "Usuarios registrados (${usuariosViewModel.usuarios.size}/5)",
                 style = MaterialTheme.typography.titleMedium
@@ -390,7 +395,7 @@ fun RegisterScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-            Spacer(modifier = Modifier.height(150.dp)) //  espacio para bottomBar
+            Spacer(modifier = Modifier.height(150.dp))
         }
     }
 }

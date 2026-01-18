@@ -28,6 +28,7 @@ fun LoginScreen(
     usuariosViewModel: UsuariosViewModel
 ) {
     var correo by remember { mutableStateOf("") }
+    var correoValido by remember { mutableStateOf(false) }
     var clave by remember { mutableStateOf("") }
     var claveVisible by remember { mutableStateOf(false) }
 
@@ -46,7 +47,7 @@ fun LoginScreen(
         if (correoTrim.isBlank()) {
             errorCorreo = "El correo es obligatorio"
             ok = false
-        } else if (!correoTrim.contains("@")) {
+        } else if (!correoValido) {
             errorCorreo = "Ingrese un correo válido"
             ok = false
         }
@@ -88,7 +89,7 @@ fun LoginScreen(
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.logo),
-                        contentDescription = "Logo ComunicaFácil",
+                        contentDescription = null,
                         contentScale = ContentScale.Fit,
                         modifier = Modifier
                             .padding(4.dp)
@@ -111,9 +112,9 @@ fun LoginScreen(
                 },
                 imeAction = ImeAction.Next,
                 modifier = Modifier.fillMaxWidth(),
-                isError = errorCorreo != null,
-                supportingText = errorCorreo
+                onValidityChange = { correoValido = it }
             )
+
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -160,6 +161,7 @@ fun LoginScreen(
                         }
                     }
                 },
+                enabled = correoValido && clave.isNotBlank(),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp)

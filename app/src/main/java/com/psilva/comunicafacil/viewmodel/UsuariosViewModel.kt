@@ -15,9 +15,7 @@ class UsuariosViewModel : ViewModel() {
         if (correoNormalizado.isBlank() || nuevo.clave.isBlank()) {
             return ResultadoRegistro.Error("Complete correo y contraseña")
         }
-        if (!correoNormalizado.contains("@") || correoNormalizado.contains(" ")) {
-            return ResultadoRegistro.Error("Ingrese un correo válido")
-        }
+
         if (!nuevo.aceptaTerminos) {
             return ResultadoRegistro.Error("Debe aceptar los términos")
         }
