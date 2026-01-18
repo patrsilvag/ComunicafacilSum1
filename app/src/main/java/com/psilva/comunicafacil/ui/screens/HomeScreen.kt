@@ -15,6 +15,8 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 import com.psilva.comunicafacil.ui.components.AppSnackbarHost
 import com.psilva.comunicafacil.ui.components.TipoMensaje
+import com.psilva.comunicafacil.ui.settings.FontSizeMode
+import com.psilva.comunicafacil.ui.settings.LocalAccessibilitySettings
 
 @Composable
 fun HomeScreen(onCerrarSesion: () -> Unit) {
@@ -35,6 +37,7 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
     val tts = remember { mutableStateOf<TextToSpeech?>(null) }
     var tipoMensaje by remember { mutableStateOf(TipoMensaje.INFO) }
 
+    val fontSizeMode = LocalAccessibilitySettings.current.fontSizeMode
 
     DisposableEffect(Unit) {
         tts.value = TextToSpeech(context) { status ->
@@ -105,10 +108,20 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
                 .padding(paddingInterior)
                 .padding(16.dp)
         ) {
-            Text(
-                text = "Comunicador",
-                style = MaterialTheme.typography.headlineMedium
-            )
+
+            Column {
+                Text(
+                    text = "Comunicador",
+                    style = MaterialTheme.typography.headlineMedium
+                )
+                Text(
+                    text = when (fontSizeMode) {
+                        FontSizeMode.Normal -> "Lectura: Normal"
+                        FontSizeMode.Aumentada -> "Lectura: Aumentada"
+                    },
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
