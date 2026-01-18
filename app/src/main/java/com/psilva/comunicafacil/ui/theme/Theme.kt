@@ -9,6 +9,8 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import com.psilva.comunicafacil.ui.settings.FontSizeMode
+import com.psilva.comunicafacil.ui.settings.LocalAccessibilitySettings
 
 private val LightColorScheme = lightColorScheme(
     primary = AppPrimary,
@@ -75,9 +77,29 @@ fun ComunicafacilTheme(
         else -> LightColorScheme
     }
 
+    val scale = when (LocalAccessibilitySettings.current.fontSizeMode) {
+        FontSizeMode.Normal -> 1.0f
+        FontSizeMode.Aumentada -> 1.15f
+    }
+
+    val scaledTypography = Typography.copy(
+        bodyLarge = Typography.bodyLarge.copy(fontSize = Typography.bodyLarge.fontSize * scale),
+        bodyMedium = Typography.bodyMedium.copy(fontSize = Typography.bodyMedium.fontSize * scale),
+        bodySmall = Typography.bodySmall.copy(fontSize = Typography.bodySmall.fontSize * scale),
+        titleLarge = Typography.titleLarge.copy(fontSize = Typography.titleLarge.fontSize * scale),
+        titleMedium = Typography.titleMedium.copy(fontSize = Typography.titleMedium.fontSize * scale),
+        titleSmall = Typography.titleSmall.copy(fontSize = Typography.titleSmall.fontSize * scale),
+        headlineLarge = Typography.headlineLarge.copy(fontSize = Typography.headlineLarge.fontSize * scale),
+        headlineMedium = Typography.headlineMedium.copy(fontSize = Typography.headlineMedium.fontSize * scale),
+        headlineSmall = Typography.headlineSmall.copy(fontSize = Typography.headlineSmall.fontSize * scale),
+    )
+
+
+
+
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = scaledTypography,
         content = content
     )
 }
