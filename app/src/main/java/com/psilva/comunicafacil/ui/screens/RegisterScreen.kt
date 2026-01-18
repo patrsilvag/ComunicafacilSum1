@@ -132,7 +132,7 @@ fun RegisterScreen(
                     tipoMensaje = TipoMensaje.ERROR
                     estadoSnackbar.showSnackbar(
                         message = resultado.mensaje,
-                        duration = SnackbarDuration.Long
+                        duration = SnackbarDuration.Short
                     )
                 }
             }

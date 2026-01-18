@@ -97,7 +97,7 @@ fun RecoverScreen(
                             tipoMensaje = TipoMensaje.ERROR
                             estadoSnackbar.showSnackbar(
                                 message = "Correo no registrado",
-                                duration = SnackbarDuration.Long
+                                duration = SnackbarDuration.Short
                             )
                         }
                     }

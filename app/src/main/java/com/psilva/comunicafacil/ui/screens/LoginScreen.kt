@@ -178,7 +178,7 @@ fun LoginScreen(
                             tipoMensaje = TipoMensaje.ERROR
                             estadoSnackbar.showSnackbar(
                                 message = "Correo o contraseña incorrectos",
-                                duration = SnackbarDuration.Long
+                                duration = SnackbarDuration.Short
                             )
                         }
                     }

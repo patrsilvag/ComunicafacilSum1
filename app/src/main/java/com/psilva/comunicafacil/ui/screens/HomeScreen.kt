@@ -88,7 +88,7 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
                 tipoMensaje = TipoMensaje.INFO
                 estadoSnackbar.showSnackbar(
                     message = "TTS no disponible en este dispositivo/emulador",
-                    duration = SnackbarDuration.Long
+                    duration = SnackbarDuration.Short
                 )
 
             }
