@@ -30,7 +30,8 @@ fun NavGraph(
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 },
-                usuariosViewModel = usuariosViewModel
+                usuariosViewModel = usuariosViewModel,
+                onFontSizeModeChange = onFontSizeModeChange
             )
         }
 

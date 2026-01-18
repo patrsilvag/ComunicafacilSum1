@@ -1,16 +1,17 @@
 package com.psilva.comunicafacil.ui.screens
 
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
@@ -20,28 +21,24 @@ import com.psilva.comunicafacil.ui.components.AppSnackbarHost
 import com.psilva.comunicafacil.ui.components.EmailField
 import com.psilva.comunicafacil.ui.components.PasswordField
 import com.psilva.comunicafacil.ui.components.TipoMensaje
+import com.psilva.comunicafacil.ui.settings.FontSizeMode
 import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
 import kotlinx.coroutines.launch
-import androidx.compose.material3.*
-import androidx.compose.material3.Text
-
-import androidx.compose.ui.semantics.contentDescription
-
-
 
 @Composable
 fun LoginScreen(
     onIrARegistro: () -> Unit,
     onIrARecuperar: () -> Unit,
     onLoginExitoso: () -> Unit,
-    usuariosViewModel: UsuariosViewModel
+    usuariosViewModel: UsuariosViewModel,
+    onFontSizeModeChange: (FontSizeMode) -> Unit
 ) {
     var correo by remember { mutableStateOf("") }
     var correoValido by remember { mutableStateOf(false) }
+
     var clave by remember { mutableStateOf("") }
     var claveVisible by remember { mutableStateOf(false) }
 
-    // Feedback persistente por campo
     var errorCorreo by remember { mutableStateOf<String?>(null) }
     var errorClave by remember { mutableStateOf<String?>(null) }
 
@@ -80,7 +77,6 @@ fun LoginScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Card(
                 modifier = Modifier
                     .width(280.dp)
@@ -124,6 +120,14 @@ fun LoginScreen(
                 onValidityChange = { correoValido = it }
             )
 
+            if (!errorCorreo.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = errorCorreo!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -145,16 +149,25 @@ fun LoginScreen(
 
             Button(
                 onClick = {
-                    // Limpia errores anteriores antes de validar
                     errorCorreo = null
                     errorClave = null
 
                     if (!validarCampos()) return@Button
 
                     alcance.launch {
-                        val ok = usuariosViewModel.validarLogin(correo.trim(), clave)
+                        val usuario = usuariosViewModel.obtenerUsuarioPorCredenciales(
+                            correo = correo.trim(),
+                            clave = clave
+                        )
 
-                        if (ok) {
+                        if (usuario != null) {
+                            val modo = if (usuario.preferencia == "Lectura Aumentada") {
+                                FontSizeMode.Aumentada
+                            } else {
+                                FontSizeMode.Normal
+                            }
+                            onFontSizeModeChange(modo)
+
                             tipoMensaje = TipoMensaje.EXITO
                             estadoSnackbar.showSnackbar(
                                 message = "Acceso permitido",
