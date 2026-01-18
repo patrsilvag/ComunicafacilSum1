@@ -18,6 +18,7 @@ import com.psilva.comunicafacil.ui.components.TipoMensaje
 import com.psilva.comunicafacil.ui.settings.FontSizeMode
 import com.psilva.comunicafacil.ui.settings.LocalAccessibilitySettings
 
+
 @Composable
 fun HomeScreen(onCerrarSesion: () -> Unit) {
 
@@ -39,10 +40,16 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
 
     val fontSizeMode = LocalAccessibilitySettings.current.fontSizeMode
 
+    val localeEsCL = Locale.Builder()
+        .setLanguage("es")
+        .setRegion("CL")
+        .build()
+
     DisposableEffect(Unit) {
         tts.value = TextToSpeech(context) { status ->
             if (status == TextToSpeech.SUCCESS) {
-                val resultado = tts.value?.setLanguage(Locale("es", "ES"))
+               // val resultado = tts.value?.setLanguage(Locale("es", "ES"))
+                val resultado = tts.value?.setLanguage(localeEsCL)
                 ttsListo =
                     resultado != TextToSpeech.LANG_MISSING_DATA &&
                             resultado != TextToSpeech.LANG_NOT_SUPPORTED

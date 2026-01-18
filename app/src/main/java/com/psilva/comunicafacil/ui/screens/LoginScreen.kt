@@ -1,15 +1,18 @@
 package com.psilva.comunicafacil.ui.screens
 
+import android.R.attr.contentDescription
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.psilva.comunicafacil.R
@@ -19,6 +22,12 @@ import com.psilva.comunicafacil.ui.components.PasswordField
 import com.psilva.comunicafacil.ui.components.TipoMensaje
 import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
 import kotlinx.coroutines.launch
+import androidx.compose.material3.*
+import androidx.compose.material3.Text
+
+import androidx.compose.ui.semantics.contentDescription
+
+
 
 @Composable
 fun LoginScreen(
@@ -174,8 +183,12 @@ fun LoginScreen(
             Text(
                 text = "Crear cuenta",
                 modifier = Modifier
-                    .clickable { onIrARegistro() }
                     .heightIn(min = 48.dp)
+                    .semantics {
+                        role = Role.Button
+                        contentDescription = "Crear cuenta. Doble toque para registrarse."
+                    }
+                    .clickable { onIrARegistro() }
             )
 
             Text(
@@ -183,6 +196,10 @@ fun LoginScreen(
                 modifier = Modifier
                     .padding(top = 8.dp)
                     .heightIn(min = 48.dp)
+                    .semantics {
+                        role = Role.Button
+                        contentDescription = "Recuperar contraseña. Doble toque para continuar."
+                    }
                     .clickable { onIrARecuperar() }
             )
         }
