@@ -145,298 +145,305 @@ fun RegisterScreen(
                 tipoSeleccionado.isNotBlank() &&
                 aceptaTerminos
 
-    Scaffold(
-        snackbarHost = { AppSnackbarHost(hostState = estadoSnackbar, tipoMensaje = tipoMensaje) },
-        bottomBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Button(
-                    onClick = { registrar() },
-                    enabled = formularioHabilitado,
+    // Se dibuja el Scaffold y, por encima, el Snackbar como overlay para que no sea recortado por bottomBar/teclado.
+    Box(modifier = Modifier.fillMaxSize()) {
+
+        Scaffold(
+            bottomBar = {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp)
+                        .padding(16.dp)
                 ) {
-                    Text("Registrar")
+                    Button(
+                        onClick = { registrar() },
+                        enabled = formularioHabilitado,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                    ) {
+                        Text("Registrar")
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    OutlinedButton(
+                        onClick = onVolverLogin,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                    ) {
+                        Text("Volver")
+                    }
+                }
+            }
+        ) { paddingInterior ->
+            val scrollEstado = rememberScrollState()
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingInterior)
+                    .padding(horizontal = 16.dp)
+                    .verticalScroll(scrollEstado)
+            ) {
+                Text(
+                    text = "Registro de usuario",
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                EmailField(
+                    value = correo,
+                    onValueChange = {
+                        correo = it
+                        errorCorreo = null
+                    },
+                    imeAction = ImeAction.Next,
+                    modifier = Modifier.fillMaxWidth(),
+                    onValidityChange = { correoValido = it }
+                )
+
+                if (!errorCorreo.isNullOrBlank()) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = errorCorreo!!,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                OutlinedButton(
-                    onClick = onVolverLogin,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp)
-                ) {
-                    Text("Volver")
-                }
-            }
-        }
-    ) { paddingInterior ->
-        val scrollEstado = rememberScrollState()
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingInterior)
-                .padding(horizontal = 16.dp)
-                .verticalScroll(scrollEstado)
-        ) {
-            Text(
-                text = "Registro de usuario",
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-
-            EmailField(
-                value = correo,
-                onValueChange = {
-                    correo = it
-                    errorCorreo = null
-                },
-                imeAction = ImeAction.Next,
-                modifier = Modifier.fillMaxWidth(),
-                onValidityChange = { correoValido = it }
-            )
-
-            if (!errorCorreo.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = errorCorreo!!,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            PasswordField(
-                value = clave,
-                onValueChange = {
-                    clave = it
-                    errorClave = null
-                },
-                visible = claveVisible,
-                onToggleVisible = { claveVisible = !claveVisible },
-                imeAction = ImeAction.Done,
-                modifier = Modifier.fillMaxWidth(),
-                isError = errorClave != null,
-                supportingText = errorClave
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Se presenta un selector desplegable para elegir el tipo de usuario, con indicador visual y descripción para TalkBack.
-            val tipoUsuarioInteraction = remember { MutableInteractionSource() }
-
-            Box(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                OutlinedTextField(
-                    value = tipoSeleccionado,
-                    onValueChange = {},
-                    label = { Text("Tipo de usuario") },
-                    readOnly = true,
-                    trailingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.ArrowDropDown,
-                            contentDescription = null
-                        )
+                PasswordField(
+                    value = clave,
+                    onValueChange = {
+                        clave = it
+                        errorClave = null
                     },
+                    visible = claveVisible,
+                    onToggleVisible = { claveVisible = !claveVisible },
+                    imeAction = ImeAction.Done,
                     modifier = Modifier.fillMaxWidth(),
-                    isError = errorTipoUsuario != null,
-                    supportingText = {
-                        if (errorTipoUsuario != null) Text(errorTipoUsuario!!)
-                    }
+                    isError = errorClave != null,
+                    supportingText = errorClave
                 )
 
-                // Se agrega una capa transparente para capturar el toque en toda el área, facilitando el uso para personas con discapacidad motora y TalkBack.
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .semantics {
-                            role = Role.Button
-                            contentDescription =
-                                "Tipo de usuario. Opción actual: $tipoSeleccionado. Doble toque para cambiar."
-                        }
-                        .clickable(
-                            interactionSource = tipoUsuarioInteraction,
-                            indication = null
-                        ) { menuAbierto = true }
-                )
+                Spacer(modifier = Modifier.height(20.dp))
 
-                // Se despliega un menú de opciones para seleccionar el tipo de usuario, cerrándose al elegir una opción o al perder foco.
-                DropdownMenu(
-                    expanded = menuAbierto,
-                    onDismissRequest = { menuAbierto = false },
-                    properties = PopupProperties(focusable = true)
-                ) {
-                    tiposUsuario.forEach { tipo ->
-                        DropdownMenuItem(
-                            text = { Text(tipo) },
-                            onClick = {
-                                tipoSeleccionado = tipo
-                                errorTipoUsuario = null
-                                menuAbierto = false
-                            }
-                        )
-                    }
-                }
-            }
+                // Se presenta un selector desplegable para elegir el tipo de usuario, con indicador visual y descripción para TalkBack.
+                val tipoUsuarioInteraction = remember { MutableInteractionSource() }
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Text("Accesibilidad Visual", style = MaterialTheme.typography.bodyMedium)
-
-            // Se muestran RadioButtons para elegir la preferencia de lectura y ajustar el tamaño de tipografía global.
-            opcionesPreferencia.forEach { opcion ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                ) {
-                    RadioButton(
-                        selected = (opcion == preferenciaSeleccionada),
-                        onClick = {
-                            preferenciaSeleccionada = opcion
-                            onFontSizeModeChange(
-                                if (opcion == "Lectura Aumentada") FontSizeMode.Aumentada
-                                else FontSizeMode.Normal
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = tipoSeleccionado,
+                        onValueChange = {},
+                        label = { Text("Tipo de usuario") },
+                        readOnly = true,
+                        trailingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.ArrowDropDown,
+                                contentDescription = null
                             )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        isError = errorTipoUsuario != null,
+                        supportingText = {
+                            if (errorTipoUsuario != null) Text(errorTipoUsuario!!)
                         }
                     )
-                    Text(text = opcion, modifier = Modifier.padding(start = 8.dp))
-                }
-            }
 
-            Spacer(modifier = Modifier.height(12.dp))
+                    // Se agrega una capa transparente para capturar el toque en toda el área, facilitando el uso para personas con discapacidad motora y TalkBack.
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .semantics {
+                                role = Role.Button
+                                contentDescription =
+                                    "Tipo de usuario. Opción actual: $tipoSeleccionado. Doble toque para cambiar."
+                            }
+                            .clickable(
+                                interactionSource = tipoUsuarioInteraction,
+                                indication = null
+                            ) { menuAbierto = true }
+                    )
 
-            // Se incorpora un Checkbox para confirmar aceptación de términos
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Checkbox(
-                    checked = aceptaTerminos,
-                    onCheckedChange = {
-                        aceptaTerminos = it
-                        if (it) errorTerminos = null
+                    // Se despliega un menú de opciones para seleccionar el tipo de usuario, cerrándose al elegir una opción o al perder foco.
+                    DropdownMenu(
+                        expanded = menuAbierto,
+                        onDismissRequest = { menuAbierto = false },
+                        properties = PopupProperties(focusable = true)
+                    ) {
+                        tiposUsuario.forEach { tipo ->
+                            DropdownMenuItem(
+                                text = { Text(tipo) },
+                                onClick = {
+                                    tipoSeleccionado = tipo
+                                    errorTipoUsuario = null
+                                    menuAbierto = false
+                                }
+                            )
+                        }
                     }
-                )
-                Text(text = "Acepto los términos y condiciones")
-            }
+                }
 
-            if (errorTerminos != null) {
-                Text(
-                    text = errorTerminos!!,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(start = 12.dp, top = 4.dp)
-                )
-            }
+                Spacer(modifier = Modifier.height(20.dp))
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Text("Accesibilidad Visual", style = MaterialTheme.typography.bodyMedium)
 
-            Text(
-                text = "Usuarios registrados (${usuariosViewModel.usuarios.size}/5)",
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(
-                        1.dp,
-                        MaterialTheme.colorScheme.outline,
-                        MaterialTheme.shapes.medium
-                    ),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                shape = MaterialTheme.shapes.medium
-            ) {
-                Column(modifier = Modifier.fillMaxWidth()) {
+                // Se muestran RadioButtons para elegir la preferencia de lectura y ajustar el tamaño de tipografía global.
+                opcionesPreferencia.forEach { opcion ->
                     Row(
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.primaryContainer)
-                            .padding(horizontal = 12.dp, vertical = 10.dp)
+                            .padding(vertical = 4.dp)
                     ) {
-                        Text(
-                            text = "Correo",
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.weight(1f),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = "Tipo",
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.weight(1f),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-
-                    if (usuariosViewModel.usuarios.isEmpty()) {
-                        Text(
-                            text = "Aún no hay usuarios registrados.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(12.dp)
-                        )
-                    } else {
-                        usuariosViewModel.usuarios.forEachIndexed { index, usuario ->
-                            val rowBg =
-                                if (index % 2 == 0) MaterialTheme.colorScheme.surface
-                                else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.20f)
-
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(rowBg)
-                                    .padding(horizontal = 12.dp, vertical = 10.dp)
-                            ) {
-                                Text(
-                                    text = usuario.correo,
-                                    modifier = Modifier.weight(1f),
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(
-                                    text = usuario.tipoUsuario,
-                                    modifier = Modifier.weight(1f),
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                        RadioButton(
+                            selected = (opcion == preferenciaSeleccionada),
+                            onClick = {
+                                preferenciaSeleccionada = opcion
+                                onFontSizeModeChange(
+                                    if (opcion == "Lectura Aumentada") FontSizeMode.Aumentada
+                                    else FontSizeMode.Normal
                                 )
                             }
+                        )
+                        Text(text = opcion, modifier = Modifier.padding(start = 8.dp))
+                    }
+                }
 
-                            if (index < usuariosViewModel.usuarios.lastIndex) {
-                                HorizontalDivider(
-                                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
-                                )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Se incorpora un Checkbox para confirmar aceptación de términos, requisito para habilitar el registro.
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Checkbox(
+                        checked = aceptaTerminos,
+                        onCheckedChange = {
+                            aceptaTerminos = it
+                            if (it) errorTerminos = null
+                        }
+                    )
+                    Text(text = "Acepto los términos y condiciones")
+                }
+
+                if (errorTerminos != null) {
+                    Text(
+                        text = errorTerminos!!,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(start = 12.dp, top = 4.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(
+                    text = "Usuarios registrados (${usuariosViewModel.usuarios.size}/5)",
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(
+                            1.dp,
+                            MaterialTheme.colorScheme.outline,
+                            MaterialTheme.shapes.medium
+                        ),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.primaryContainer)
+                                .padding(horizontal = 12.dp, vertical = 10.dp)
+                        ) {
+                            Text(
+                                text = "Correo",
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.weight(1f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "Tipo",
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.weight(1f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+
+                        if (usuariosViewModel.usuarios.isEmpty()) {
+                            Text(
+                                text = "Aún no hay usuarios registrados.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(12.dp)
+                            )
+                        } else {
+                            usuariosViewModel.usuarios.forEachIndexed { index, usuario ->
+                                val rowBg =
+                                    if (index % 2 == 0) MaterialTheme.colorScheme.surface
+                                    else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.20f)
+
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(rowBg)
+                                        .padding(horizontal = 12.dp, vertical = 10.dp)
+                                ) {
+                                    Text(
+                                        text = usuario.correo,
+                                        modifier = Modifier.weight(1f),
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(
+                                        text = usuario.tipoUsuario,
+                                        modifier = Modifier.weight(1f),
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+
+                                if (index < usuariosViewModel.usuarios.lastIndex) {
+                                    HorizontalDivider(
+                                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
+                                    )
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(24.dp))
-            Spacer(modifier = Modifier.height(150.dp))
+                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(150.dp))
+            }
         }
+
+        // Se muestra el Snackbar como overlay superior para evitar que quede oculto por teclado o bottomBar.
+        AppSnackbarHost(
+            hostState = estadoSnackbar,
+            tipoMensaje = tipoMensaje
+        )
     }
 }
