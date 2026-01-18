@@ -39,6 +39,15 @@ class UsuariosViewModel : ViewModel() {
         }
     }
 
+    fun obtenerUsuarioPorCredenciales(correo: String, clave: String): Usuario? {
+        val correoNormalizado = correo.trim().lowercase()
+        if (correoNormalizado.isBlank() || clave.isBlank()) return null
+
+        return _usuarios.firstOrNull { usuario ->
+            usuario.correo == correoNormalizado && usuario.clave == clave
+        }
+    }
+
     fun existeCorreo(correo: String): Boolean {
         val correoNormalizado = correo.trim().lowercase()
         if (correoNormalizado.isBlank()) return false
@@ -46,6 +55,7 @@ class UsuariosViewModel : ViewModel() {
         return _usuarios.any { it.correo == correoNormalizado }
     }
 }
+
 
 sealed class ResultadoRegistro {
     data class Ok(val mensaje: String) : ResultadoRegistro()
