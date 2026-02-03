@@ -3,6 +3,7 @@ package com.psilva.comunicafacil.viewmodel
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import com.psilva.comunicafacil.model.Usuario
+import com.psilva.comunicafacil.utils.normalizarCorreo
 
 class UsuariosViewModel : ViewModel() {
 
@@ -10,7 +11,7 @@ class UsuariosViewModel : ViewModel() {
     val usuarios: List<Usuario> = _usuarios
 
     fun registrarUsuario(nuevo: Usuario): ResultadoRegistro {
-        val correoNormalizado = nuevo.correo.trim().lowercase()
+        val correoNormalizado = nuevo.correo.normalizarCorreo()
 
         if (correoNormalizado.isBlank() || nuevo.clave.isBlank()) {
             return ResultadoRegistro.Error("Complete correo y contraseña")
@@ -31,7 +32,8 @@ class UsuariosViewModel : ViewModel() {
     }
 
     fun validarLogin(correo: String, clave: String): Boolean {
-        val correoNormalizado = correo.trim().lowercase()
+        val correoNormalizado = correo.normalizarCorreo()
+
         if (correoNormalizado.isBlank() || clave.isBlank()) return false
 
         return _usuarios.any {
@@ -40,7 +42,7 @@ class UsuariosViewModel : ViewModel() {
     }
 
     fun obtenerUsuarioPorCredenciales(correo: String, clave: String): Usuario? {
-        val correoNormalizado = correo.trim().lowercase()
+        val correoNormalizado = correo.normalizarCorreo()
         if (correoNormalizado.isBlank() || clave.isBlank()) return null
 
         return _usuarios.firstOrNull { usuario ->
@@ -49,7 +51,7 @@ class UsuariosViewModel : ViewModel() {
     }
 
     fun existeCorreo(correo: String): Boolean {
-        val correoNormalizado = correo.trim().lowercase()
+        val correoNormalizado = correo.normalizarCorreo()
         if (correoNormalizado.isBlank()) return false
 
         return _usuarios.any { it.correo == correoNormalizado }
