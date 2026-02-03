@@ -36,7 +36,9 @@ class MainActivity : ComponentActivity() {
                     NavGraph(
                         navController = navController,
                         usuariosViewModel = usuariosViewModel,
-                        onFontSizeModeChange = { fontSizeMode = it }
+                        onFontSizeModeChange = { fontSizeMode = it } ,
+                        darkMode = darkMode,
+                        onDarkModeChange = { darkMode = it }
                     )
                 }
             }
