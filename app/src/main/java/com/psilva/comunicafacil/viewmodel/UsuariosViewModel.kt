@@ -5,31 +5,37 @@ import androidx.lifecycle.ViewModel
 import com.psilva.comunicafacil.model.Usuario
 import com.psilva.comunicafacil.utils.normalizarCorreo
 
-private const val max_usuarios= 5
+private const val MAX_USUARIOS = 5
 class UsuariosViewModel : ViewModel() {
 
     private val _usuarios = mutableStateListOf<Usuario>()
     val usuarios: List<Usuario> = _usuarios
 
     fun registrarUsuario(nuevo: Usuario): ResultadoRegistro {
-        val correoNormalizado = nuevo.correo.normalizarCorreo()
+        return try {
 
-        if (correoNormalizado.isBlank() || nuevo.clave.isBlank()) {
-            return ResultadoRegistro.Error("Complete correo y contraseña")
-        }
+            val correoNormalizado = nuevo.correo.normalizarCorreo()
 
-        if (!nuevo.aceptaTerminos) {
-            return ResultadoRegistro.Error("Debe aceptar los términos")
-        }
-        if (_usuarios.size >= max_usuarios) {
-            return ResultadoRegistro.Error("Límite alcanzado: máximo 5 usuarios")
-        }
-        if (_usuarios.any { it.correo.trim().lowercase() == correoNormalizado }) {
-            return ResultadoRegistro.Error("Correo ya registrado")
-        }
+            if (correoNormalizado.isBlank() || nuevo.clave.isBlank()) {
+                return ResultadoRegistro.Error("Complete correo y contraseña")
+            }
 
-        _usuarios.add(nuevo.copy(correo = correoNormalizado))
-        return ResultadoRegistro.Ok("Usuario registrado")
+            if (!nuevo.aceptaTerminos) {
+                return ResultadoRegistro.Error("Debe aceptar los términos")
+            }
+            if (_usuarios.size >= MAX_USUARIOS ) {
+                return ResultadoRegistro.Error("Límite alcanzado: máximo 5 usuarios")
+            }
+            if (_usuarios.any { it.correo.normalizarCorreo() == correoNormalizado }) {
+                return ResultadoRegistro.Error("Correo ya registrado")
+            }
+
+            _usuarios.add(nuevo.copy(correo = correoNormalizado))
+            return ResultadoRegistro.Ok("Usuario registrado")
+
+        }catch (e: Exception) {
+            ResultadoRegistro.Error("Error inesperado al registrar usuario")
+        }
     }
 
     fun validarLogin(correo: String, clave: String): Boolean {
