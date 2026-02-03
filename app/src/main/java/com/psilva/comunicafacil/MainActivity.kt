@@ -23,11 +23,13 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             var fontSizeMode by remember { mutableStateOf(FontSizeMode.Normal) }
+            var darkMode by remember { mutableStateOf(false) }
+
 
             CompositionLocalProvider(
                 LocalAccessibilitySettings provides AccessibilitySettings(fontSizeMode = fontSizeMode)
             ) {
-                ComunicafacilTheme {
+                ComunicafacilTheme(darkTheme = darkMode) {
                     val navController = rememberNavController()
                     val usuariosViewModel: UsuariosViewModel = viewModel()
 
