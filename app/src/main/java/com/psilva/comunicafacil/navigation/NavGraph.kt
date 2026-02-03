@@ -15,7 +15,9 @@ import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
 fun NavGraph(
     navController: NavHostController,
     usuariosViewModel: UsuariosViewModel,
-    onFontSizeModeChange: (FontSizeMode) -> Unit
+    onFontSizeModeChange: (FontSizeMode) -> Unit,
+    darkMode: Boolean,
+    onDarkModeChange: (Boolean) -> Unit
 ) {
     NavHost(
         navController = navController,
@@ -31,7 +33,9 @@ fun NavGraph(
                     }
                 },
                 usuariosViewModel = usuariosViewModel,
-                onFontSizeModeChange = onFontSizeModeChange
+                onFontSizeModeChange = onFontSizeModeChange,
+                darkMode = darkMode,
+                onDarkModeChange = onDarkModeChange
             )
         }
 
@@ -58,6 +62,7 @@ fun NavGraph(
                     }
                 }
             )
+
         }
     }
 }

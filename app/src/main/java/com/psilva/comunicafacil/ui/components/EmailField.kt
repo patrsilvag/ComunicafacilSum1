@@ -2,6 +2,10 @@ package com.psilva.comunicafacil.ui.components
 
 import android.util.Patterns
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -33,6 +37,13 @@ fun EmailField(
         value = value,
         onValueChange = onValueChange,
         label = { Text("Correo electrónico") },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.Email,
+                contentDescription = null, // null porque el label ya describe el campo
+                tint = MaterialTheme.colorScheme.primary // Usamos tu azul profesional
+            )
+        },
         modifier = modifier,
         singleLine = true,
         isError = value.isNotBlank() && !esValido,

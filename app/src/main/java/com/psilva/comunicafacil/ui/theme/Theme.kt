@@ -8,57 +8,38 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import com.psilva.comunicafacil.ui.settings.FontSizeMode
 import com.psilva.comunicafacil.ui.settings.LocalAccessibilitySettings
 
+// --- Esquema para Contraste Visual (Modo Oscuro) ---
+private val DarkColorScheme = darkColorScheme(
+    primary = DarkPrimary,
+    onPrimary = Color.Black,
+    primaryContainer = AppPrimary, // Usamos el azul profundo para resaltar bloques
+    onPrimaryContainer = Color.White,
+    secondary = DarkSecondary,     // Amarillo de alta visibilidad para el botón "Hablar"
+    onSecondary = DarkOnSecondary,
+    background = DarkBackground,   // Negro puro
+    onBackground = DarkOnBackground,
+    surface = DarkSurface,
+    onSurface = DarkOnSurface,
+    outline = AppOutline
+)
+
+// --- Esquema para Lectura Normal (Modo Claro) ---
 private val LightColorScheme = lightColorScheme(
     primary = AppPrimary,
     onPrimary = AppOnPrimary,
     primaryContainer = AppPrimaryContainer,
     onPrimaryContainer = AppOnPrimaryContainer,
-
-    secondary = AppSecondary,
+    secondary = AppSecondary,      // Amarillo ámbar para accesibilidad
     onSecondary = AppOnSecondary,
-    secondaryContainer = AppSecondaryContainer,
-    onSecondaryContainer = AppOnSecondaryContainer,
-
-    error = AppError,
-    onError = AppOnError,
-    errorContainer = AppErrorContainer,
-    onErrorContainer = AppOnErrorContainer,
-
     background = AppBackground,
     onBackground = AppOnBackground,
-
     surface = AppSurface,
     onSurface = AppOnSurface,
-
-    outline = AppOutline
-)
-
-private val DarkColorScheme = darkColorScheme(
-    primary = AppPrimary,
-    onPrimary = AppOnPrimary,
-    primaryContainer = AppPrimaryContainer,
-    onPrimaryContainer = AppOnPrimaryContainer,
-
-    secondary = AppSecondary,
-    onSecondary = AppOnSecondary,
-    secondaryContainer = AppSecondaryContainer,
-    onSecondaryContainer = AppOnSecondaryContainer,
-
-    error = AppError,
-    onError = AppOnError,
-    errorContainer = AppErrorContainer,
-    onErrorContainer = AppOnErrorContainer,
-
-    background = AppBackground,
-    onBackground = AppOnBackground,
-
-    surface = AppSurface,
-    onSurface = AppOnSurface,
-
     outline = AppOutline
 )
 

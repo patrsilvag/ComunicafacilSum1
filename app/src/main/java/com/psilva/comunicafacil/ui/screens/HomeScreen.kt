@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -116,19 +117,28 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
                 .padding(16.dp)
         ) {
 
-            Column {
-                Text(
-                    text = "Comunicador",
-                    style = MaterialTheme.typography.headlineMedium
-                )
-                Text(
-                    text = when (fontSizeMode) {
-                        FontSizeMode.Normal -> "Lectura: Normal"
-                        FontSizeMode.Aumentada -> "Lectura: Aumentada"
-                    },
-                    style = MaterialTheme.typography.bodySmall
-                )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+
+                Column {
+                    Text(
+                        text = "Comunicador",
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+                    Text(
+                        text = when (fontSizeMode) {
+                            FontSizeMode.Normal -> "Lectura: Normal"
+                            FontSizeMode.Aumentada -> "Lectura: Aumentada"
+                        },
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+
             }
+
 
             Spacer(modifier = Modifier.height(12.dp))
 

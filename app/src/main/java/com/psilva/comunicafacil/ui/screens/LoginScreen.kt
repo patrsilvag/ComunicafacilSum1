@@ -1,5 +1,6 @@
 package com.psilva.comunicafacil.ui.screens
 
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -8,12 +9,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
+
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+
+import androidx.compose.ui.semantics.role
+
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.psilva.comunicafacil.R
@@ -25,13 +28,22 @@ import com.psilva.comunicafacil.ui.settings.FontSizeMode
 import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
 import kotlinx.coroutines.launch
 
+import com.psilva.comunicafacil.ui.theme.AppOnPrimary
+
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+
 @Composable
 fun LoginScreen(
     onIrARegistro: () -> Unit,
     onIrARecuperar: () -> Unit,
     onLoginExitoso: () -> Unit,
     usuariosViewModel: UsuariosViewModel,
-    onFontSizeModeChange: (FontSizeMode) -> Unit
+    onFontSizeModeChange: (FontSizeMode) -> Unit,
+    darkMode: Boolean,
+    onDarkModeChange: (Boolean) -> Unit
 ) {
     var correo by remember { mutableStateOf("") }
     var correoValido by remember { mutableStateOf(false) }
@@ -88,26 +100,53 @@ fun LoginScreen(
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
+                // Reemplaza el bloque del logo por este:
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.logo),
-                        contentDescription = null,
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            .padding(4.dp)
-                            .fillMaxSize()
+                        contentDescription = "Logo",
+                        modifier = Modifier.size(160.dp),
+                        // Aplicamos el filtro para que en modo oscuro el blanco no moleste
+                        colorFilter = if (darkMode) {
+                            ColorFilter.tint(color = AppOnPrimary, blendMode = BlendMode.Modulate)
+                        } else null
                     )
                 }
             }
 
             Text(
                 text = "Iniciar sesión",
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineLarge, // Visibilidad para discapacidad visual
+                color = MaterialTheme.colorScheme.primary, // Azul profundo
                 modifier = Modifier.padding(bottom = 24.dp)
             )
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                Text(
+                    text = "Contraste visual"
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Switch(
+                    checked = darkMode,
+                    onCheckedChange = { onDarkModeChange(it) },
+                    modifier = Modifier.semantics {
+                        contentDescription =
+                            if (darkMode)
+                                "Desactivar contraste alto"
+                            else
+                                "Activar contraste alto"
+                    }
+                )
+            }
 
             EmailField(
                 value = correo,
@@ -120,16 +159,19 @@ fun LoginScreen(
                 onValidityChange = { correoValido = it }
             )
 
+// Este bloque de error ahora se verá con el color profesional de tu paleta
             if (!errorCorreo.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = errorCorreo!!,
                     color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(start = 12.dp) // Un pequeño margen para que alinee con el label
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+        // Aumentamos a 24.dp para que no se vea "amontonado" (Estilo MD3)
+            Spacer(modifier = Modifier.height(24.dp))
 
             PasswordField(
                 value = clave,
