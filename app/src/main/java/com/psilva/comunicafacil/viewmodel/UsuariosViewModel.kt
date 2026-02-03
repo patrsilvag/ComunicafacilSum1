@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import com.psilva.comunicafacil.model.Usuario
 import com.psilva.comunicafacil.utils.normalizarCorreo
 
+private const val max_usuarios= 5
 class UsuariosViewModel : ViewModel() {
 
     private val _usuarios = mutableStateListOf<Usuario>()
@@ -20,7 +21,7 @@ class UsuariosViewModel : ViewModel() {
         if (!nuevo.aceptaTerminos) {
             return ResultadoRegistro.Error("Debe aceptar los términos")
         }
-        if (_usuarios.size >= 5) {
+        if (_usuarios.size >= max_usuarios) {
             return ResultadoRegistro.Error("Límite alcanzado: máximo 5 usuarios")
         }
         if (_usuarios.any { it.correo.trim().lowercase() == correoNormalizado }) {
