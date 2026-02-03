@@ -54,7 +54,10 @@ class UsuariosViewModel : ViewModel() {
         val correoNormalizado = correo.normalizarCorreo()
         if (correoNormalizado.isBlank()) return false
 
-        return _usuarios.any { it.correo == correoNormalizado }
+        return _usuarios
+            .filter { it.correo == correoNormalizado }
+            .isNotEmpty()
+
     }
 }
 
