@@ -5,5 +5,5 @@ data class Usuario(
     val clave: String,
     val tipoUsuario: String,
     val aceptaTerminos: Boolean,
-    val preferencia: String
+    val preferencia: String = "Lectura Normal"
 )
