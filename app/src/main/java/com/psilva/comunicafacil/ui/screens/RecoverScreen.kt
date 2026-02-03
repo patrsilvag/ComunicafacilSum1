@@ -1,9 +1,12 @@
 package com.psilva.comunicafacil.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.psilva.comunicafacil.ui.components.AppSnackbarHost
@@ -53,11 +56,20 @@ fun RecoverScreen(
         ) {
             Text(
                 text = "Recuperar contraseña",
-                style = MaterialTheme.typography.headlineMedium
+                style = MaterialTheme.typography.headlineLarge, // Fuente grande para accesibilidad
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.primary, // Azul profundo
+                modifier = Modifier.padding(bottom = 8.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            Text(
+                text = "Ingresa tu correo y te enviaremos las instrucciones para restablecer tu clave.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                modifier = Modifier.padding(bottom = 24.dp)
+            )
             EmailField(
                 value = correo,
                 onValueChange = {
@@ -78,7 +90,7 @@ fun RecoverScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
             Button(
                 onClick = {
@@ -105,20 +117,35 @@ fun RecoverScreen(
                 enabled = correoValido,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp)
+                    .height(56.dp), // Altura mejorada para accesibilidad motriz
+                shape = RoundedCornerShape(16.dp), // Esquinas modernas de Material 3
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary, // Azul profundo
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
             ) {
-                Text("Enviar")
+                Text(
+                    text = "Enviar",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedButton(
                 onClick = onVolverLogin,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp)
+                    .height(56.dp), // Consistencia en el tamaño de los botones
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline) // Borde definido en Color.kt
             ) {
-                Text("Volver")
+                Text(
+                    text = "Volver",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary // Texto en azul para coherencia visual
+                )
             }
         }
     }
