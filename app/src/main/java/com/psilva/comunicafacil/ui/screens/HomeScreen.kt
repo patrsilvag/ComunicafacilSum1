@@ -21,6 +21,9 @@ import com.psilva.comunicafacil.ui.components.TipoMensaje
 import com.psilva.comunicafacil.ui.settings.FontSizeMode
 import com.psilva.comunicafacil.ui.settings.LocalAccessibilitySettings
 
+// ✅ PROPIEDAD DE EXTENSIÓN: Optimiza la validación de texto
+val String.isSpeakable: Boolean get() = this.trim().isNotBlank()
+
 @Composable
 fun HomeScreen(onCerrarSesion: () -> Unit) {
     var mensajeIngreso by remember { mutableStateOf("") }
@@ -56,9 +59,25 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
         }
     }
 
+    // ✅ LAMBDA CON ETIQUETA: Flujo de validación profesional
+    fun procesarYMostrarMensaje() {
+        errorMensaje = null
+
+        run validacion@{
+            val texto = mensajeIngreso
+
+            if (!texto.isSpeakable) {
+                errorMensaje = "Escriba un mensaje antes de mostrarlo"
+                return@validacion
+            }
+
+            mensajeMostrado = texto.trim()
+            mensajeIngreso = ""
+        }
+    }
+
     fun hablarMensaje() {
-        val texto = mensajeMostrado.trim()
-        if (texto.isBlank()) return
+        if (!mensajeMostrado.isSpeakable) return
         if (!ttsListo) {
             alcance.launch {
                 tipoMensaje = TipoMensaje.INFO
@@ -67,7 +86,7 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
             return
         }
         tts.value?.stop()
-        tts.value?.speak(texto, TextToSpeech.QUEUE_FLUSH, null, "comunicafacil_mensaje")
+        tts.value?.speak(mensajeMostrado, TextToSpeech.QUEUE_FLUSH, null, "comunicafacil_mensaje")
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -119,14 +138,7 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
-                    onClick = {
-                        if (mensajeIngreso.trim().isBlank()) {
-                            errorMensaje = "Escriba un mensaje antes de mostrarlo"
-                        } else {
-                            mensajeMostrado = mensajeIngreso.trim()
-                            mensajeIngreso = ""
-                        }
-                    },
+                    onClick = { procesarYMostrarMensaje() },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     shape = RoundedCornerShape(16.dp)
                 ) {
@@ -146,7 +158,7 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
                     )
                 ) {
                     Text(
-                        text = if (mensajeMostrado.isBlank()) "..." else mensajeMostrado,
+                        text = if (!mensajeMostrado.isSpeakable) "..." else mensajeMostrado,
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
@@ -156,15 +168,15 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // BOTÓN ACCIÓN PRINCIPAL (USANDO AMARILLO ÁMBAR DEL TEMA)
+                // BOTÓN ACCIÓN PRINCIPAL (AMARILLO ÁMBAR PARA ACCESIBILIDAD)
                 Button(
                     onClick = { hablarMensaje() },
-                    enabled = mensajeMostrado.isNotBlank(),
+                    enabled = mensajeMostrado.isSpeakable,
                     modifier = Modifier.fillMaxWidth().height(64.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondary, // Amarillo Ámbar de Theme.kt
-                        contentColor = MaterialTheme.colorScheme.onSecondary // Negro de Theme.kt
+                        containerColor = MaterialTheme.colorScheme.secondary, // Definido en Theme.kt
+                        contentColor = MaterialTheme.colorScheme.onSecondary // Definido en Theme.kt
                     )
                 ) {
                     Text("Hablar", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
