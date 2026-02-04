@@ -21,7 +21,7 @@ val AppOnSurface = Color(0xFF191C1E)
 // --- Secundario (Acción de alta visibilidad: "Hablar") ---
 // Cambiamos el neutro por un Amarillo Ámbar (Color de accesibilidad universal).
 val AppSecondary = Color(0xFFFFB300)
-val AppOnSecondary = Color(0xFF000000) // Negro sobre amarillo para máximo contraste.
+val AppOnSecondary = Color(0xFF1C1B1F) // Negro sobre amarillo para máximo contraste.
 
 // Contenedor secundario
 val AppSecondaryContainer = Color(0xFFFFECB3)

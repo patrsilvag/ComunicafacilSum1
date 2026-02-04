@@ -1,5 +1,6 @@
 package com.psilva.comunicafacil.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -178,11 +179,22 @@ fun RegisterScreen(
 
                 OutlinedButton(
                     onClick = onVolverLogin,
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    shape = RoundedCornerShape(16.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(
+                        1.dp,
+                        MaterialTheme.colorScheme.outline
+                    )
                 ) {
-                    Text("Volver")
+                    Text(
+                        text = "Volver",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
+
 
                 Spacer(modifier = Modifier.height(24.dp))
 
