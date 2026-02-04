@@ -1,6 +1,7 @@
 package com.psilva.comunicafacil.ui.components
 
 import android.util.Patterns
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
@@ -12,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun EmailField(
@@ -53,6 +55,8 @@ fun EmailField(
                 value.isNotBlank() && !esValido -> Text("Ingrese un correo válido")
             }
         },
+        // 2. APLICAMOS BORDES REDONDEADOS (Estilo Material 3 moderno)
+        shape = RoundedCornerShape(16.dp),
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Email,
             imeAction = imeAction
