@@ -43,7 +43,7 @@ fun NavGraph(
             RegisterScreen(
                 onVolverLogin = { navController.popBackStack() },
                 usuariosViewModel = usuariosViewModel,
-                onFontSizeModeChange = onFontSizeModeChange
+                onFontSizeModeChange = onFontSizeModeChange // SE AGREGA ESTA LÍNEA (Soluciona el error)
             )
         }
 
@@ -62,7 +62,6 @@ fun NavGraph(
                     }
                 }
             )
-
         }
     }
 }
