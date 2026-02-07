@@ -1,6 +1,5 @@
 package com.psilva.comunicafacil.ui.screens
 
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -9,14 +8,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-
 import androidx.compose.ui.semantics.role
-
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.psilva.comunicafacil.R
@@ -27,13 +23,10 @@ import com.psilva.comunicafacil.ui.components.TipoMensaje
 import com.psilva.comunicafacil.ui.settings.FontSizeMode
 import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
 import kotlinx.coroutines.launch
-
-import com.psilva.comunicafacil.ui.theme.AppOnPrimary
-
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.zIndex
+import com.psilva.comunicafacil.utils.validarCampo
 
 @Composable
 fun LoginScreen(
@@ -47,10 +40,8 @@ fun LoginScreen(
 ) {
     var correo by remember { mutableStateOf("") }
     var correoValido by remember { mutableStateOf(false) }
-
     var clave by remember { mutableStateOf("") }
     var claveVisible by remember { mutableStateOf(false) }
-
     var errorCorreo by remember { mutableStateOf<String?>(null) }
     var errorClave by remember { mutableStateOf<String?>(null) }
 
@@ -60,26 +51,21 @@ fun LoginScreen(
 
     fun validarCampos(): Boolean {
         var ok = true
-        val correoTrim = correo.trim()
 
-        if (correoTrim.isBlank()) {
+        ok = validarCampo(correo.isNotBlank()) {
             errorCorreo = "El correo es obligatorio"
-            ok = false
-        } else if (!correoValido) {
-            errorCorreo = "Ingrese un correo válido"
-            ok = false
-        }
+        } && ok
 
-        if (clave.isBlank()) {
+        ok = validarCampo(clave.isNotBlank()) {
             errorClave = "La contraseña es obligatoria"
-            ok = false
-        }
+        } && ok
 
         return ok
     }
 
+
     Scaffold(
-        snackbarHost = { AppSnackbarHost(hostState = estadoSnackbar, tipoMensaje = tipoMensaje) }
+        snackbarHost = { AppSnackbarHost(estadoSnackbar, tipoMensaje) }
     ) { paddingInterior ->
         Column(
             modifier = Modifier
@@ -89,6 +75,7 @@ fun LoginScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // LOGO  Integrado con Card y soporte para Modo Oscuro
             Card(
                 modifier = Modifier
                     .width(280.dp)
@@ -96,24 +83,23 @@ fun LoginScreen(
                     .padding(bottom = 20.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.background
+                    containerColor = MaterialTheme.colorScheme.surface
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
-                // Reemplaza el bloque del logo por este:
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp),
+                    modifier = Modifier.fillMaxWidth().fillMaxHeight(),
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.logo),
-                        contentDescription = "Logo",
+                        painter = painterResource(id = R.drawable.logo), // Asegúrate que el archivo se llame logo.png en drawable
+                        contentDescription = "Logo ComunicaFácil",
                         modifier = Modifier.size(160.dp),
-                        // Aplicamos el filtro para que en modo oscuro el blanco no moleste
                         colorFilter = if (darkMode) {
-                            ColorFilter.tint(color = AppOnPrimary, blendMode = BlendMode.Modulate)
+                            ColorFilter.tint(
+                                color = MaterialTheme.colorScheme.onBackground
+                              //  blendMode = BlendMode.SrcIn
+                            )
                         } else null
                     )
                 }
@@ -121,142 +107,78 @@ fun LoginScreen(
 
             Text(
                 text = "Iniciar sesión",
-                style = MaterialTheme.typography.headlineLarge, // Visibilidad para discapacidad visual
-                color = MaterialTheme.colorScheme.primary, // Azul profundo
-                modifier = Modifier.padding(bottom = 24.dp)
+                style = MaterialTheme.typography.headlineLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 16.dp)
             )
+
+            // Switch de Contraste Visual para Accesibilidad
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .padding(vertical = 8.dp)
+                    .zIndex(1f)
             ) {
-
-                Text(
-                    text = "Contraste visual"
-                )
-
+                Text(text = "Contraste visual")
                 Spacer(modifier = Modifier.width(8.dp))
-
                 Switch(
                     checked = darkMode,
-                    onCheckedChange = { onDarkModeChange(it) },
-                    modifier = Modifier.semantics {
-                        contentDescription =
-                            if (darkMode)
-                                "Desactivar contraste alto"
-                            else
-                                "Activar contraste alto"
+                    onCheckedChange = {
+                        onDarkModeChange(it)
                     }
                 )
             }
 
             EmailField(
                 value = correo,
-                onValueChange = {
-                    correo = it
-                    errorCorreo = null
-                },
+                onValueChange = { correo = it; errorCorreo = null },
                 imeAction = ImeAction.Next,
-                modifier = Modifier.fillMaxWidth(),
-                onValidityChange = { correoValido = it }
+                onValidityChange = { correoValido = it },
+                modifier = Modifier.fillMaxWidth()
             )
-
-// Este bloque de error ahora se verá con el color profesional de tu paleta
-            if (!errorCorreo.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = errorCorreo!!,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(start = 12.dp) // Un pequeño margen para que alinee con el label
-                )
+            errorCorreo?.let {
+                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp))
             }
 
-        // Aumentamos a 24.dp para que no se vea "amontonado" (Estilo MD3)
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             PasswordField(
                 value = clave,
-                onValueChange = {
-                    clave = it
-                    errorClave = null
-                },
+                onValueChange = { clave = it; errorClave = null },
                 visible = claveVisible,
                 onToggleVisible = { claveVisible = !claveVisible },
                 imeAction = ImeAction.Done,
-                modifier = Modifier.fillMaxWidth(),
                 isError = errorClave != null,
-                supportingText = errorClave
+                supportingText = errorClave,
+                modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             Button(
                 onClick = {
-                    errorCorreo = null
-                    errorClave = null
-
                     if (!validarCampos()) return@Button
 
-                    alcance.launch {
-                        val usuario = usuariosViewModel.obtenerUsuarioPorCredenciales(
-                            correo = correo.trim(),
-                            clave = clave
-                        )
-
-                        if (usuario != null) {
-                            val modo = if (usuario.preferencia == "Lectura Aumentada") {
-                                FontSizeMode.Aumentada
-                            } else {
-                                FontSizeMode.Normal
-                            }
-                            onFontSizeModeChange(modo)
-
-                            tipoMensaje = TipoMensaje.EXITO
-                            estadoSnackbar.showSnackbar(
-                                message = "Acceso permitido",
-                                duration = SnackbarDuration.Short
-                            )
-                            onLoginExitoso()
-                        } else {
+                    if (usuariosViewModel.validarLogin(correo, clave)) {
+                        onLoginExitoso()
+                    } else {
+                        alcance.launch {
                             tipoMensaje = TipoMensaje.ERROR
-                            estadoSnackbar.showSnackbar(
-                                message = "Correo o contraseña incorrectos",
-                                duration = SnackbarDuration.Short
-                            )
+                            estadoSnackbar.showSnackbar("Credenciales incorrectas")
                         }
                     }
                 },
                 enabled = correoValido && clave.isNotBlank(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(16.dp)
             ) {
-                Text("Ingresar")
+                Text("Ingresar", style = MaterialTheme.typography.titleMedium)
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = "Crear cuenta",
-                modifier = Modifier
-                    .heightIn(min = 48.dp)
-                    .semantics {
-                        role = Role.Button
-                        contentDescription = "Crear cuenta. Doble toque para registrarse."
-                    }
-                    .clickable { onIrARegistro() }
-            )
-
-            Text(
-                text = "¿Olvidaste tu contraseña?",
-                modifier = Modifier
-                    .padding(top = 8.dp)
-                    .heightIn(min = 48.dp)
-                    .semantics {
-                        role = Role.Button
-                        contentDescription = "Recuperar contraseña. Doble toque para continuar."
-                    }
-                    .clickable { onIrARecuperar() }
-            )
+            TextButton(onClick = onIrARegistro) { Text("Crear cuenta") }
+            TextButton(onClick = onIrARecuperar) { Text("¿Olvidaste tu contraseña?") }
         }
     }
 }

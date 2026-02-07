@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import com.psilva.comunicafacil.ui.components.AppSnackbarHost
 import com.psilva.comunicafacil.ui.components.EmailField
 import com.psilva.comunicafacil.ui.components.TipoMensaje
+import com.psilva.comunicafacil.utils.validarCampo
 import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
 import kotlinx.coroutines.launch
 
@@ -31,18 +32,20 @@ fun RecoverScreen(
     var tipoMensaje by remember { mutableStateOf(TipoMensaje.INFO) }
 
     fun validarAntesDeEnviar(): Boolean {
-        val correoTrim = correo.trim()
-        if (correoTrim.isBlank()) {
+        var ok = true
+
+        ok = validarCampo(correo.trim().isNotBlank()) {
             errorCorreo = "El correo es obligatorio"
-            return false
-        }
-        if (!correoValido) {
-            // EmailField ya muestra "Ingrese un correo válido", pero dejamos este guardrail
+        } && ok
+
+        ok = validarCampo(correoValido) {
             errorCorreo = "Ingrese un correo válido"
-            return false
-        }
-        return true
+        } && ok
+
+        return ok
     }
+
+
 
     Scaffold(
         snackbarHost = { AppSnackbarHost(hostState = estadoSnackbar, tipoMensaje = tipoMensaje) }
