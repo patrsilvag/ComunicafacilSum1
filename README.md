@@ -1,61 +1,106 @@
 # ComunicaFácil – Kotlin + Jetpack Compose
 
-Aplicación Android desarrollada en **Kotlin** y **Jetpack Compose**, orientada a la comunicación asistida para personas con discapacidad del habla. El proyecto destaca por su enfoque en **accesibilidad (WCAG)**, integración de **Text To Speech (TTS)** y la implementación técnica de conceptos avanzados de programación funcional.
+Aplicación Android desarrollada en **Kotlin** y **Jetpack Compose**, orientada a la comunicación asistida para personas con discapacidad sensorial del habla.  
+El proyecto transforma el dispositivo móvil en una herramienta de apoyo comunicacional mediante **entrada de texto**, **salida por voz (Text To Speech)** y una interfaz diseñada bajo criterios de **accesibilidad (WCAG)**.
 
 ---
 
 ## 🏗️ Estructura del Proyecto
 
-La aplicación se organiza siguiendo una arquitectura modular y limpia, facilitando su mantenimiento:
+La aplicación se organiza siguiendo una arquitectura modular que separa responsabilidades y facilita la mantención del código:
 
-- **ui/screens**: Contiene las pantallas principales como `HomeScreen.kt`, `LoginScreen.kt`, `RegisterScreen.kt` y `RecoverScreen.kt`.
-- **ui/components**: Componentes de interfaz reutilizables como `EmailField.kt`, `PasswordField.kt` y `AppSnackbarHost.kt`.
-- **viewmodel**: Lógica de negocio y gestión de estado de los usuarios.
-- **ui/settings**: Configuración de accesibilidad (tamaño de fuente y temas).
+- **ui/screens**  
+  Pantallas principales de la aplicación:  
+  `HomeScreen.kt`, `LoginScreen.kt`, `RegisterScreen.kt`, `RecoverScreen.kt`.
+
+- **ui/components**  
+  Componentes reutilizables de interfaz como `EmailField.kt`, `PasswordField.kt`, `PasswordField.kt` y `AppSnackbarHost.kt`.
+
+- **viewmodel**  
+  Gestión de estado y orquestación de la lógica relacionada con usuarios (`UsuariosViewModel.kt`).
+
+- **data**  
+  Fuente de datos y repositorio de usuarios (`UsuariosRepository.kt`, `UsuariosDataSource.kt`).
+
+- **ui/settings / ui/utils**  
+  Configuración de accesibilidad y utilidades comunes (modo de fuente, validaciones inline).
 
 ---
 
 ## 🧠 Tópicos de Kotlin Implementados y Justificados
 
-A continuación, se detallan los **9 conceptos trabajados en la asignatura** y su aplicación específica en el código:
-
-### 1. Funciones de orden superior
-**Ubicación:** `ui/screens/RegisterScreen.kt` y `LoginScreen.kt`  
-**Descripción:** Se utilizan para gestionar eventos de navegación y cambios de estado global. La función `RegisterScreen` recibe `onFontSizeModeChange` como parámetro, permitiendo que un componente hijo modifique la configuración de la app en un nivel superior.
-
-### 2. Lambdas
-**Ubicación:** `ui/screens/HomeScreen.kt`  
-**Descripción:** Se emplean para definir comportamientos dinámicos en la interfaz de usuario. Por ejemplo, en los parámetros `onClick` de los botones para ejecutar la lógica de "Hablar" o "Mostrar en pantalla".
-
-### 3. Lambda con etiqueta
-**Ubicación:** `ui/screens/HomeScreen.kt`  
-**Descripción:** Aplicada en la función `procesarYMostrarMensaje()` mediante el bloque `run validacion@{ ... }`. Se utiliza `return@validacion` para interrumpir el flujo si el texto está vacío, permitiendo un control de errores más elegante y legible.
-
-### 4. Funciones de extensión
-**Ubicación:** `ui/screens/HomeScreen.kt` (Inferido en lógica de validación)  
-**Descripción:** Se utilizan para extender la funcionalidad de clases existentes. Por ejemplo, el uso de `.trim()` sobre objetos `String` antes de procesar el mensaje para asegurar que no se envíen espacios innecesarios al motor de voz.
-
-### 5. Propiedades de extensión
-**Ubicación:** `ui/screens/HomeScreen.kt`  
-**Descripción:** Se definió la propiedad `val String.isSpeakable: Boolean`, que calcula dinámicamente si una cadena es válida para ser reproducida por el TTS sin necesidad de almacenar estado adicional.
-
-### 6. Filter (Funciones de colección)
-**Ubicación:** `viewmodel/UsuariosViewModel.kt`  
-**Descripción:** Se utiliza para procesar listas de usuarios. Por ejemplo, al validar credenciales, se filtran las colecciones de datos para encontrar coincidencias específicas de correo y contraseña.
-
-### 7. Funciones Inline
-**Ubicación:** `ui/theme/Theme.kt` y utilidades de navegación.  
-**Descripción:** Se aplican en funciones pequeñas que reciben lambdas para optimizar el rendimiento, evitando la creación de objetos adicionales en memoria durante las recomposiciones de Compose.
-
-### 8. Excepciones
-**Ubicación:** `ui/screens/HomeScreen.kt`  
-**Descripción:** El código evalúa estados excepcionales del motor `TextToSpeech`, como `LANG_MISSING_DATA` o `LANG_NOT_SUPPORTED`, gestionando estos casos para informar al usuario en lugar de permitir que la app falle.
-
-### 9. Try / Catch
-**Ubicación:** `ui/screens/HomeScreen.kt` y `viewmodel/UsuariosViewModel.kt`  
-**Descripción:** Se implementan bloques `try/catch` para manejar operaciones sensibles, como el inicio de corrutinas para el registro de usuarios, asegurando que cualquier error sea capturado y mostrado a través de un `Snackbar`.
+A continuación, se detallan los **9 conceptos de Kotlin solicitados en la Semana 5**, indicando su **ubicación real** y su **uso justificado dentro de la aplicación**.
 
 ---
+
+### 1. Funciones de orden superior
+**Ubicación:** `ui/screens/LoginScreen.kt`, `RegisterScreen.kt`
+
+**Descripción:**  
+Se utilizan funciones de orden superior para manejar navegación y cambios de estado desde la UI hacia niveles superiores de la aplicación.  
+Las pantallas reciben lambdas como parámetros (`onIrARegistro`, `onIrAHome`, `onVolverLogin`, etc.), permitiendo desacoplar la navegación de la lógica interna de la pantalla.
+
+---
+
+### 2. Lambdas
+**Ubicación:** `ui/screens/HomeScreen.kt`
+
+**Descripción:**  
+Se emplean lambdas en la definición de comportamientos dinámicos asociados a la interfaz, especialmente en los eventos `onClick` de botones, como las acciones **“Mostrar en pantalla”** y **“Hablar”**, manteniendo la UI declarativa y reactiva.
+
+---
+
+### 3. Lambda con etiqueta
+**Ubicación:** `ui/screens/HomeScreen.kt`
+
+**Descripción:**  
+Se aplica una lambda con etiqueta dentro de la función `procesarYMostrarMensaje()` utilizando el bloque:
+
+`run validacion@{
+    if (!texto.isSpeakable) {
+        errorMensaje = "Escriba un mensaje antes de mostrarlo"
+        return@validacion
+    }
+}`
+
+### 4. Funciones de extensión
+**Ubicación:** `ui/screens/HomeScreen.kt` y utilidades de validación
+
+**Descripción:**  
+Se utilizan funciones de extensión sobre `String` para normalizar y preparar datos antes de su procesamiento, como el uso de `trim()` y `lowercase()`, evitando duplicación de lógica y mejorando la legibilidad del código.
+
+---
+
+### 5. Propiedades de extensión
+**Ubicación:** `ui/screens/HomeScreen.kt`
+**Descripción:**  
+Se define la siguiente propiedad de extensión:
+
+`
+val String.isSpeakable: Boolean
+    get() = this.trim().isNotBlank()`
+
+### 6. Filter (Funciones de colección)
+
+**Ubicación:** viewmodel/UsuariosViewModel.kt / data/UsuariosRepository.kt
+**Descripción:**
+Se utilizan funciones de colección como any y filter para procesar listas de usuarios, por ejemplo al validar credenciales o verificar la existencia de un correo registrado, permitiendo un manejo declarativo y expresivo de los datos.
+
+### 7. Funciones inline
+**Ubicación:** ui/utils/ValidationUtils.kt
+**Descripción:**
+Se implementan funciones inline para centralizar validaciones comunes de formularios (Login, Registro y Recuperar contraseña).
+Esto reduce duplicación de código y evita la creación innecesaria de objetos lambda durante las recomposiciones en Jetpack Compose.
+
+### 8. Excepciones
+**Ubicación:** ui/screens/HomeScreen.kt
+**Descripción:**
+La aplicación evalúa estados excepcionales del motor TextToSpeech, como LANG_MISSING_DATA o LANG_NOT_SUPPORTED, controlando estos escenarios para informar al usuario mediante la interfaz en lugar de provocar fallos en ejecución.
+
+### 9. Try / Catch
+**Ubicación:** viewmodel/UsuariosViewModel.kt y data/UsuariosRepository.kt
+**Descripción:**
+Se implementan bloques try/catch en operaciones sensibles como el registro de usuarios, capturando errores inesperados y devolviendo resultados controlados que luego son informados al usuario mediante Snackbar.
 
 ## ✅ Tecnologías y Accesibilidad
 
