@@ -59,7 +59,7 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
         }
     }
 
-    // ✅ LAMBDA CON ETIQUETA: Flujo de validación profesional
+    // ✅ LAMBDA CON ETIQUETA: Flujo de validación
     fun procesarYMostrarMensaje() {
         errorMensaje = null
 
