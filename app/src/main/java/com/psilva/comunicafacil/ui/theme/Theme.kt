@@ -75,9 +75,6 @@ fun ComunicafacilTheme(
         headlineSmall = Typography.headlineSmall.copy(fontSize = Typography.headlineSmall.fontSize * scale),
     )
 
-
-
-
     MaterialTheme(
         colorScheme = colorScheme,
         typography = scaledTypography,
