@@ -44,8 +44,8 @@ class UsuariosViewModel(
         )
     }
 
-    fun validarLogin(correo: String, clave: String): Boolean =
-        repository.validarCredenciales(correo, clave)
+   // fun validarLogin(correo: String, clave: String): Boolean =
+        // repository.validarCredenciales(correo, clave)
 
     fun existeCorreo(correo: String): Boolean =
         repository.existeCorreo(correo)

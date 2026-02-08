@@ -21,7 +21,7 @@ import com.psilva.comunicafacil.ui.components.TipoMensaje
 import com.psilva.comunicafacil.ui.settings.FontSizeMode
 import com.psilva.comunicafacil.ui.settings.LocalAccessibilitySettings
 
-// ✅ PROPIEDAD DE EXTENSIÓN: Optimiza la validación de texto
+//  PROPIEDAD DE EXTENSIÓN: Optimiza la validación de texto
 val String.isSpeakable: Boolean get() = this.trim().isNotBlank()
 
 @Composable
@@ -59,7 +59,7 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
         }
     }
 
-    // ✅ LAMBDA CON ETIQUETA: Flujo de validación
+    // LAMBDA CON ETIQUETA: Flujo de validación
     fun procesarYMostrarMensaje() {
         errorMensaje = null
 
