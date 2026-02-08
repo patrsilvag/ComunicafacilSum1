@@ -19,13 +19,15 @@ class UsuariosViewModel(
         clave: String,
         tipoUsuario: String,
         aceptaTerminos: Boolean,
+        preferencia: String, // Recibe el String
         onResultado: (ResultadoRegistro) -> Unit
     ) {
         val usuario = Usuario(
             correo = correo.normalizarCorreo(),
             clave = clave,
             tipoUsuario = tipoUsuario,
-            aceptaTerminos = aceptaTerminos
+            aceptaTerminos = aceptaTerminos,
+            preferencia = preferencia // Se asigna al modelo
         )
 
         repository.registrarUsuario(usuario).fold(
@@ -47,4 +49,9 @@ class UsuariosViewModel(
 
     fun existeCorreo(correo: String): Boolean =
         repository.existeCorreo(correo)
+
+    fun login(correo: String, clave: String): Usuario? {
+        return repository.obtenerUsuarioPorCredenciales(correo, clave)
+    }
+
 }

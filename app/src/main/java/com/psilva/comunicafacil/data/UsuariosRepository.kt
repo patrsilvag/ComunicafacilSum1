@@ -46,4 +46,12 @@ class UsuariosRepository : UsuariosDataSource {
             Result.failure(e)
         }
     }
+
+    override fun obtenerUsuarioPorCredenciales(correo: String, clave: String):  Usuario? {
+        val normalizado =correo.normalizarCorreo()
+        return usuarios.find {
+            it.correo == normalizado && it.clave == clave
+        }
+    }
+
 }

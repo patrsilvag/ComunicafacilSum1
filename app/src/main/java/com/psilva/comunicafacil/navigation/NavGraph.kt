@@ -27,7 +27,14 @@ fun NavGraph(
             LoginScreen(
                 onIrARegistro = { navController.navigate(Screen.Registro.route) },
                 onIrARecuperar = { navController.navigate(Screen.Recuperar.route) },
-                onLoginExitoso = {
+                onLoginExitoso = { usuario ->
+
+                    val modo = if (usuario.preferencia == "Lectura Aumentada") {
+                        FontSizeMode.Aumentada
+                    } else {
+                        FontSizeMode.Normal
+                    }
+                    onFontSizeModeChange(modo)
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
@@ -57,6 +64,8 @@ fun NavGraph(
         composable(Screen.Home.route) {
             HomeScreen(
                 onCerrarSesion = {
+                    // 1. Reseteamos la fuente a Normal al salir
+                    onFontSizeModeChange(FontSizeMode.Normal)
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }

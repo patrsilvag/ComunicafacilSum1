@@ -26,13 +26,14 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.zIndex
+import com.psilva.comunicafacil.model.Usuario
 import com.psilva.comunicafacil.utils.validarCampo
 
 @Composable
 fun LoginScreen(
     onIrARegistro: () -> Unit,
     onIrARecuperar: () -> Unit,
-    onLoginExitoso: () -> Unit,
+    onLoginExitoso: (Usuario) -> Unit,
     usuariosViewModel: UsuariosViewModel,
     onFontSizeModeChange: (FontSizeMode) -> Unit,
     darkMode: Boolean,
@@ -158,9 +159,10 @@ fun LoginScreen(
             Button(
                 onClick = {
                     if (!validarCampos()) return@Button
+                    val usuario = usuariosViewModel.login(correo, clave)
 
-                    if (usuariosViewModel.validarLogin(correo, clave)) {
-                        onLoginExitoso()
+                    if (usuario != null) {
+                        onLoginExitoso(usuario)
                     } else {
                         alcance.launch {
                             tipoMensaje = TipoMensaje.ERROR

@@ -99,6 +99,7 @@ fun RegisterScreen(
             clave = clave,
             tipoUsuario = tipoSeleccionado,
             aceptaTerminos = aceptaTerminos,
+            preferencia = preferenciaSeleccionada,
             onResultado = { resultado ->
                 alcance.launch {
                     when (resultado) {

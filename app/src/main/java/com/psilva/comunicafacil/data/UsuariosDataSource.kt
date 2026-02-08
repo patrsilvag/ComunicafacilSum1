@@ -11,4 +11,6 @@ interface UsuariosDataSource {
     fun validarCredenciales(correo: String, clave: String): Boolean
 
     fun registrarUsuario(usuario: Usuario): Result<Unit>
+
+    fun obtenerUsuarioPorCredenciales( correo: String, clave: String ): Usuario?
 }
