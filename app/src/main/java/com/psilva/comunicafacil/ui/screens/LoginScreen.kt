@@ -83,7 +83,7 @@ fun LoginScreen(
                     .padding(bottom = 20.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = MaterialTheme.colorScheme.background
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
@@ -91,16 +91,16 @@ fun LoginScreen(
                     modifier = Modifier.fillMaxWidth().fillMaxHeight(),
                     contentAlignment = Alignment.Center
                 ) {
+                    val logoRes = if (darkMode) {
+                        R.drawable.logo_dark
+                    } else {
+                        R.drawable.logo_light
+                    }
+
                     Image(
-                        painter = painterResource(id = R.drawable.logo), // Asegúrate que el archivo se llame logo.png en drawable
+                        painter = painterResource(id = logoRes),
                         contentDescription = "Logo ComunicaFácil",
-                        modifier = Modifier.size(160.dp),
-                        colorFilter = if (darkMode) {
-                            ColorFilter.tint(
-                                color = MaterialTheme.colorScheme.onBackground
-                              //  blendMode = BlendMode.SrcIn
-                            )
-                        } else null
+                        modifier = Modifier.size(160.dp)
                     )
                 }
             }
