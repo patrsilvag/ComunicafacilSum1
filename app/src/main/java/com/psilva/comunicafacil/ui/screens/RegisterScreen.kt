@@ -93,7 +93,7 @@ fun RegisterScreen(
 
         if (!validarFormulario()) return
 
-        // ✅ INTEGRACIÓN CORRECTA: Usamos el callback onResultado para mostrar el Snackbar
+        // uso el callback onResultado para mostrar el Snackbar
         usuariosViewModel.registrarUsuario(
             correo = correo,
             clave = clave,

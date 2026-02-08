@@ -5,6 +5,7 @@ import com.psilva.comunicafacil.data.ResultadoRegistro
 import com.psilva.comunicafacil.data.UsuariosDataSource
 import com.psilva.comunicafacil.data.UsuariosRepository
 import com.psilva.comunicafacil.model.Usuario
+import com.psilva.comunicafacil.utils.normalizarCorreo
 
 class UsuariosViewModel(
     private val repository: UsuariosDataSource = UsuariosRepository()
@@ -21,7 +22,7 @@ class UsuariosViewModel(
         onResultado: (ResultadoRegistro) -> Unit
     ) {
         val usuario = Usuario(
-            correo = correo.trim().lowercase(),
+            correo = correo.normalizarCorreo(),
             clave = clave,
             tipoUsuario = tipoUsuario,
             aceptaTerminos = aceptaTerminos
