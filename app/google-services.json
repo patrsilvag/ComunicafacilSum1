@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "402678844394",
+    "project_id": "comunicafacil-2e7cd",
+    "storage_bucket": "comunicafacil-2e7cd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:402678844394:android:6292e7cf4c469350ccc093",
+        "android_client_info": {
+          "package_name": "com.psilva.comunicafacil"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAat1ZxxxVMgfZ3YYMZLlSqO2guGiUMgOs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
