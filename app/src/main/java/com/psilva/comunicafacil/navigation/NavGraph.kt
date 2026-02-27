@@ -55,6 +55,7 @@ fun NavGraph(
                     }
                 },
                 onVolverLogin = {
+                    usuariosViewModel.limpiarMensaje()
                     navController.popBackStack()
                 },
                 usuariosViewModel = usuariosViewModel,
@@ -64,7 +65,8 @@ fun NavGraph(
 
         composable(Screen.Recuperar.route) {
             RecoverScreen(
-                onVolverLogin = { navController.popBackStack() },
+                onVolverLogin = { usuariosViewModel.limpiarMensaje()
+                                  navController.popBackStack() },
                 usuariosViewModel = usuariosViewModel
             )
         }
@@ -72,6 +74,7 @@ fun NavGraph(
         composable(Screen.Home.route) {
             HomeScreen(
                 onCerrarSesion = {
+                    usuariosViewModel.limpiarMensaje()
                     // 1. Reseteamos la fuente a Normal al salir
                     onFontSizeModeChange(FontSizeMode.Normal)
                     navController.navigate(Screen.Login.route) {

@@ -32,18 +32,44 @@ fun LoginScreen(
     darkMode: Boolean,
     onDarkModeChange: (Boolean) -> Unit
 ) {
-    // Estados de UI
+    // Observamos el estado global del ViewModel
+    val uiState by usuariosViewModel.uiState.collectAsState()
+
+    // Estados locales de UI para los campos
     var correo by remember { mutableStateOf("") }
     var correoValido by remember { mutableStateOf(false) }
     var clave by remember { mutableStateOf("") }
     var claveVisible by remember { mutableStateOf(false) }
     var errorCorreo by remember { mutableStateOf<String?>(null) }
     var errorClave by remember { mutableStateOf<String?>(null) }
-    var cargando by remember { mutableStateOf(false) }
 
     val estadoSnackbar = remember { SnackbarHostState() }
     val alcance = rememberCoroutineScope()
     var tipoMensaje by remember { mutableStateOf(TipoMensaje.INFO) }
+
+    // Esto asegura que CADA VEZ que la pantalla se muestra, la pizarra se borra
+    LaunchedEffect(Unit) {
+        usuariosViewModel.limpiarMensaje()
+    }
+
+    // LIMPIEZA AUTOMÁTICA AL SALIR
+    DisposableEffect(Unit) {
+        onDispose {
+            usuariosViewModel.limpiarMensaje()
+        }
+    }
+
+    //  EFECTO LANZADO: Escucha mensajes del ViewModel (Errores traducidos)
+    LaunchedEffect(uiState.mensaje) {
+        uiState.mensaje?.let { texto ->
+            // Corregido: Si no es error, usamos EXITO (verde) en lugar de INFO (azul)
+            tipoMensaje = if (uiState.esError) TipoMensaje.ERROR else TipoMensaje.EXITO
+            alcance.launch {
+                estadoSnackbar.showSnackbar(texto)
+                usuariosViewModel.limpiarMensaje()
+            }
+        }
+    }
 
     fun validarCampos(): Boolean {
         var ok = true
@@ -56,131 +82,126 @@ fun LoginScreen(
         return ok
     }
 
-    Scaffold(
-        snackbarHost = { AppSnackbarHost(estadoSnackbar, tipoMensaje) }
-    ) { paddingInterior ->
-        Column(
-            modifier = Modifier
-                .padding(paddingInterior)
-                .padding(16.dp)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Logo adaptativo (Claro/Oscuro)
-            Card(
+    // Usamos Box para que el Snackbar flote al final, igual que en Recover y Register
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold { paddingInterior ->
+            Column(
                 modifier = Modifier
-                    .width(280.dp)
-                    .height(140.dp)
-                    .padding(bottom = 20.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    .padding(paddingInterior)
+                    .padding(16.dp)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                // Logo adaptativo
+                Card(
+                    modifier = Modifier
+                        .width(280.dp)
+                        .height(140.dp)
+                        .padding(bottom = 20.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.background
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
-                    val logoRes = if (darkMode) R.drawable.logo_dark else R.drawable.logo_light
-                    Image(
-                        painter = painterResource(id = logoRes),
-                        contentDescription = "Logo ComunicaFácil",
-                        modifier = Modifier.size(160.dp)
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        val logoRes = if (darkMode) R.drawable.logo_dark else R.drawable.logo_light
+                        Image(
+                            painter = painterResource(id = logoRes),
+                            contentDescription = "Logo ComunicaFácil",
+                            modifier = Modifier.size(160.dp)
+                        )
+                    }
+                }
+
+                Text(
+                    text = "Iniciar sesión",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                // Control de Accesibilidad (Modo Oscuro)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 8.dp).zIndex(1f)
+                ) {
+                    Text(text = "Contraste visual")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Switch(
+                        checked = darkMode,
+                        onCheckedChange = { onDarkModeChange(it) }
                     )
                 }
-            }
 
-            Text(
-                text = "Iniciar sesión",
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-
-            // Control de Accesibilidad (Modo Oscuro)
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(vertical = 8.dp).zIndex(1f)
-            ) {
-                Text(text = "Contraste visual")
-                Spacer(modifier = Modifier.width(8.dp))
-                Switch(
-                    checked = darkMode,
-                    onCheckedChange = { onDarkModeChange(it) }
+                EmailField(
+                    value = correo,
+                    onValueChange = { correo = it; errorCorreo = null },
+                    imeAction = ImeAction.Next,
+                    onValidityChange = { correoValido = it },
+                    modifier = Modifier.fillMaxWidth()
                 )
-            }
-
-            EmailField(
-                value = correo,
-                onValueChange = { correo = it; errorCorreo = null },
-                imeAction = ImeAction.Next,
-                onValidityChange = { correoValido = it },
-                modifier = Modifier.fillMaxWidth()
-            )
-            errorCorreo?.let {
-                Text(
-                    text = it,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(start = 8.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            PasswordField(
-                value = clave,
-                onValueChange = { clave = it; errorClave = null },
-                visible = claveVisible,
-                onToggleVisible = { claveVisible = !claveVisible },
-                imeAction = ImeAction.Done,
-                isError = errorClave != null,
-                supportingText = errorClave,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Botón de Ingreso con Lógica de Firebase
-            if (cargando) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-            } else {
-                Button(
-                    onClick = {
-                        if (!validarCampos()) return@Button
-
-                        cargando = true
-                        usuariosViewModel.login(correo, clave) { resultado ->
-                            cargando = false
-                            resultado.fold(
-                                onSuccess = { usuario ->
-                                    onLoginExitoso(usuario)
-                                },
-                                onFailure = { error ->
-                                    alcance.launch {
-                                        tipoMensaje = TipoMensaje.ERROR
-                                        estadoSnackbar.showSnackbar(
-                                            error.message ?: "Credenciales incorrectas"
-                                        )
-                                    }
-                                }
-                            )
-                        }
-                    },
-                    enabled = correoValido && clave.isNotBlank(),
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Text("Ingresar", style = MaterialTheme.typography.titleMedium)
+                errorCorreo?.let {
+                    Text(
+                        text = it,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                PasswordField(
+                    value = clave,
+                    onValueChange = { clave = it; errorClave = null },
+                    visible = claveVisible,
+                    onToggleVisible = { claveVisible = !claveVisible },
+                    imeAction = ImeAction.Done,
+                    isError = errorClave != null,
+                    supportingText = errorClave,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // Botón de Ingreso
+                if (uiState.cargando) {
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                } else {
+                    Button(
+                        onClick = {
+                            if (!validarCampos()) return@Button
+
+                            usuariosViewModel.login(correo, clave) { resultado ->
+                                resultado.onSuccess { usuario ->
+                                    onLoginExitoso(usuario)
+                                }
+                            }
+                        },
+                        enabled = correoValido && clave.isNotBlank(),
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text("Ingresar", style = MaterialTheme.typography.titleMedium)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                TextButton(onClick = onIrARegistro) { Text("Crear cuenta") }
+                TextButton(onClick = onIrARecuperar) { Text("¿Olvidaste tu contraseña?") }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            TextButton(onClick = onIrARegistro) { Text("Crear cuenta") }
-            TextButton(onClick = onIrARecuperar) { Text("¿Olvidaste tu contraseña?") }
         }
+
+        // Host del Snackbar fuera del Scaffold para asegurar visibilidad superior
+        AppSnackbarHost(
+            hostState = estadoSnackbar,
+            tipoMensaje = tipoMensaje
+        )
     }
 }

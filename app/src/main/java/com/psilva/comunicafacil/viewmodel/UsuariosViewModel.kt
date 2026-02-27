@@ -1,5 +1,6 @@
 package com.psilva.comunicafacil.viewmodel
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -13,10 +14,12 @@ import com.psilva.comunicafacil.data.UsuariosDataSource
 import com.psilva.comunicafacil.data.UsuariosRepository
 import com.psilva.comunicafacil.model.Usuario
 import com.psilva.comunicafacil.ui.state.RegisterUiState
+import com.psilva.comunicafacil.utils.FirebaseErrorHandler
 import com.psilva.comunicafacil.utils.normalizarCorreo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class UsuariosViewModel(
@@ -26,14 +29,11 @@ class UsuariosViewModel(
     private val _uiState = MutableStateFlow(RegisterUiState())
     val uiState: StateFlow<RegisterUiState> = _uiState.asStateFlow()
 
-    // 🔥 NUEVO: Lista para la simulación local con datos reales de Firebase
     var usuariosRealtime by mutableStateOf<List<Usuario>>(emptyList())
         private set
 
-    //private val database = FirebaseDatabase.getInstance().getReference("usuarios")
     private val database by lazy { FirebaseDatabase.getInstance().getReference("usuarios") }
 
-    // 🔥 NUEVO: Escucha cambios en Firebase para llenar la tabla de la UI
     fun cargarUsuarios() {
         database.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -44,7 +44,9 @@ class UsuariosViewModel(
                 }
                 usuariosRealtime = lista
             }
-            override fun onCancelled(error: DatabaseError) {}
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("DB_ERROR", "Error al cargar usuarios: ${error.message}")
+            }
         })
     }
 
@@ -55,38 +57,26 @@ class UsuariosViewModel(
         aceptaTerminos: Boolean,
         preferencia: String
     ) {
-        // --- 🧪 INICIO DE VALIDACIONES PREVIAS (Para JUnit) ---
-
-        // Regex para validar formato de correo
         val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\$".toRegex()
 
         if (!correo.matches(emailRegex)) {
-            _uiState.value = RegisterUiState(
-                mensaje = "Formato de correo inválido",
-                esError = true
-            )
+            _uiState.update { it.copy(mensaje = "Formato de correo inválido", esError = true) }
             return
         }
 
         if (clave.length < 6) {
-            _uiState.value = RegisterUiState(
-                mensaje = "La contraseña debe tener al menos 6 caracteres",
-                esError = true
-            )
+            _uiState.update { it.copy(mensaje = "La contraseña debe tener al menos 6 caracteres", esError = true) }
             return
         }
 
         if (!aceptaTerminos) {
-            _uiState.value = RegisterUiState(
-                mensaje = "Debes aceptar los términos y condiciones",
-                esError = true
-            )
+            _uiState.update { it.copy(mensaje = "Debes aceptar los términos y condiciones", esError = true) }
             return
         }
 
-        // --- 🧪 FIN DE VALIDACIONES ---
         viewModelScope.launch {
-            _uiState.value = RegisterUiState(cargando = true)
+            _uiState.update { it.copy(cargando = true, mensaje = null) }
+
             val usuario = Usuario(
                 correo = correo.normalizarCorreo(),
                 clave = clave,
@@ -94,21 +84,32 @@ class UsuariosViewModel(
                 aceptaTerminos = aceptaTerminos,
                 preferencia = preferencia
             )
+
             val resultado = repository.registrarUsuario(usuario)
+
             resultado.fold(
                 onSuccess = {
-                    _uiState.value = RegisterUiState(
-                        cargando = false,
-                        mensaje = "Usuario registrado correctamente",
-                        registroExitoso = true
-                    )
+                    _uiState.update {
+                        it.copy(
+                            cargando = false,
+                            mensaje = "Usuario registrado correctamente",
+                            registroExitoso = true,
+                            esError = false
+                        )
+                    }
                 },
                 onFailure = { error ->
-                    _uiState.value = RegisterUiState(
-                        cargando = false,
-                        mensaje = error.message ?: "Error desconocido",
-                        esError = true
-                    )
+                    val mensajeTraducido = FirebaseErrorHandler.getFriendlyMessage(error as? Exception)
+                    Log.e("AUTH_DEBUG", "Error en Registro: $mensajeTraducido")
+
+                    _uiState.update {
+                        it.copy(
+                            cargando = false,
+                            mensaje = mensajeTraducido,
+                            esError = true,
+                            registroExitoso = false
+                        )
+                    }
                 }
             )
         }
@@ -116,17 +117,70 @@ class UsuariosViewModel(
 
     fun login(correo: String, clave: String, onResultado: (Result<Usuario>) -> Unit) {
         viewModelScope.launch {
-            onResultado(repository.login(correo, clave))
+            _uiState.update { it.copy(cargando = true, mensaje = null) }
+            val resultado = repository.login(correo, clave)
+
+            resultado.fold(
+                onSuccess = { user ->
+                    _uiState.update { it.copy(cargando = false, esError = false) }
+                    onResultado(Result.success(user))
+                },
+                onFailure = { error ->
+                    val mensajeTraducido = FirebaseErrorHandler.getFriendlyMessage(error as? Exception)
+                    Log.e("AUTH_DEBUG", "Error en Login: $mensajeTraducido")
+
+                    _uiState.update {
+                        it.copy(
+                            cargando = false,
+                            mensaje = mensajeTraducido,
+                            esError = true
+                        )
+                    }
+                    onResultado(Result.failure(Exception(mensajeTraducido)))
+                }
+            )
         }
     }
 
     fun recuperarPassword(correo: String, onResultado: (Result<Unit>) -> Unit) {
         viewModelScope.launch {
-            onResultado(repository.recuperarPassword(correo))
+            _uiState.update { it.copy(cargando = true, mensaje = null) }
+            val resultado = repository.recuperarPassword(correo)
+
+            resultado.fold(
+                onSuccess = {
+                    _uiState.update {
+                        it.copy(
+                            cargando = false,
+                            mensaje = "Se ha enviado un correo para restablecer tu contraseña",
+                            esError = false
+                        )
+                    }
+                    onResultado(Result.success(Unit))
+                },
+                onFailure = { error ->
+                    val mensajeTraducido = FirebaseErrorHandler.getFriendlyMessage(error as? Exception)
+                    _uiState.update {
+                        it.copy(
+                            cargando = false,
+                            mensaje = mensajeTraducido,
+                            esError = true
+                        )
+                    }
+                    onResultado(Result.failure(Exception(mensajeTraducido)))
+                }
+            )
         }
     }
 
     fun limpiarMensaje() {
-        _uiState.value = _uiState.value.copy(mensaje = null)
+        _uiState.update {
+            it.copy(
+                mensaje = null,
+                esError = false,
+                cargando = false, // Añade esto para asegurar reset completo
+                registroExitoso = false
+            )
+        }
     }
 }

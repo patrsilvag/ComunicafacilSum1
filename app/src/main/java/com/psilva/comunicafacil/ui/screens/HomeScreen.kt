@@ -1,5 +1,6 @@
 package com.psilva.comunicafacil.ui.screens
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.speech.RecognitionListener
@@ -7,6 +8,7 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -261,7 +263,86 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
                     Text("Hablar", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
                 }
 
-                Spacer(modifier = Modifier.height(40.dp))
+                // --- BLOQUE DE GEOLOCALIZACIÓN ---
+                val contextUbicacion = LocalContext.current
+                val fusedLocationClient = remember { com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(contextUbicacion) }
+                var textoCoordenadas by remember { mutableStateOf("Ubicación: No obtenida") }
+
+                // Launcher para solicitar permisos en tiempo real
+                @SuppressLint("MissingPermission")
+                val launcherPermisosGps = rememberLauncherForActivityResult(
+                    androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
+                ) { permisos ->
+                    val concedido = permisos[android.Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                            permisos[android.Manifest.permission.ACCESS_COARSE_LOCATION] == true
+
+                    if (concedido) {
+                        try {
+                            // VERIFICACIÓN DE SEGURIDAD EXPLICITA (Esto quita el error)
+                            if (androidx.core.app.ActivityCompat.checkSelfPermission(
+                                    contextUbicacion,
+                                    android.Manifest.permission.ACCESS_FINE_LOCATION
+                                ) == android.content.pm.PackageManager.PERMISSION_GRANTED ||
+                                androidx.core.app.ActivityCompat.checkSelfPermission(
+                                    contextUbicacion,
+                                    android.Manifest.permission.ACCESS_COARSE_LOCATION
+                                ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                            ) {
+                                fusedLocationClient.lastLocation.addOnSuccessListener { loc ->
+                                    if (loc != null) {
+                                        textoCoordenadas = "Lat: ${loc.latitude}, Lon: ${loc.longitude}"
+                                        Log.d("GPS_DEBUG", "Ubicación obtenida: $textoCoordenadas")
+                                    } else {
+                                        textoCoordenadas = "GPS activo, buscando señal..."
+                                    }
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Log.e("GPS_DEBUG", "Error: ${e.message}")
+                        }
+                    } else {
+                        textoCoordenadas = "Permiso de ubicación denegado"
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Interfaz de Usuario para la ubicación
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "📍 Localización del Dispositivo",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = textoCoordenadas,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                        Button(
+                            onClick = {
+                                launcherPermisosGps.launch(arrayOf(
+                                    android.Manifest.permission.ACCESS_FINE_LOCATION,
+                                    android.Manifest.permission.ACCESS_COARSE_LOCATION
+                                ))
+                            },
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Ubicar")
+                        }
+                    }
+                }
 
                 OutlinedButton(
                     onClick = onCerrarSesion,

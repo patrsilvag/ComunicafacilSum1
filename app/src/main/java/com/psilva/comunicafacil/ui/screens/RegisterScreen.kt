@@ -1,10 +1,12 @@
 package com.psilva.comunicafacil.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -12,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -23,7 +26,9 @@ import com.psilva.comunicafacil.ui.components.PasswordField
 import com.psilva.comunicafacil.ui.components.TipoMensaje
 import com.psilva.comunicafacil.ui.settings.FontSizeMode
 import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
@@ -33,12 +38,9 @@ fun RegisterScreen(
     onFontSizeModeChange: (FontSizeMode) -> Unit
 ) {
     val uiState by usuariosViewModel.uiState.collectAsStateWithLifecycle()
+    val teclado = LocalSoftwareKeyboardController.current
 
-    // 🔥 Carga inicial de usuarios desde Firebase
-    LaunchedEffect(Unit) {
-        usuariosViewModel.cargarUsuarios()
-    }
-
+    // Estados locales del formulario
     var correo by remember { mutableStateOf("") }
     var correoValido by remember { mutableStateOf(false) }
     var clave by remember { mutableStateOf("") }
@@ -55,47 +57,78 @@ fun RegisterScreen(
     val estadoSnackbar = remember { SnackbarHostState() }
     val alcance = rememberCoroutineScope()
 
-    LaunchedEffect(uiState.mensaje) {
-        uiState.mensaje?.let {
-            estadoSnackbar.showSnackbar(it)
-            if (uiState.registroExitoso) {
-                onRegistroExitoso()
-            }
+    // Esto asegura que CADA VEZ que la pantalla se muestra, la pizarra se borra
+    LaunchedEffect(Unit) {
+        usuariosViewModel.limpiarMensaje()
+    }
+    // LIMPIEZA AUTOMÁTICA AL SALIR
+    DisposableEffect(Unit) {
+        onDispose {
             usuariosViewModel.limpiarMensaje()
+        }
+    }
+    // Carga inicial
+    LaunchedEffect(Unit) {
+        usuariosViewModel.cargarUsuarios()
+    }
+
+    // --- 🎯 LOGICA DE MENSAJES (Igual que el original pero conectado al VM) ---
+    LaunchedEffect(uiState.mensaje) {
+        uiState.mensaje?.let { texto ->
+            Log.d("UI_DEBUG", "Mostrando Snackbar: $texto")
+            teclado?.hide()
+
+            alcance.launch {
+                estadoSnackbar.showSnackbar(texto)
+
+                if (uiState.registroExitoso) {
+                    delay(1000)
+                    onRegistroExitoso()
+                }
+                usuariosViewModel.limpiarMensaje()
+            }
         }
     }
 
     val formularioHabilitado = correoValido && clave.length >= 6 && aceptaTerminos && !uiState.cargando
 
+    // Usamos Box para asegurar que el Snackbar flote al final, como en tu código original
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             bottomBar = {
-                Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                    Button(
-                        onClick = {
-                            usuariosViewModel.registrarUsuario(
-                                correo = correo.trim(),
-                                clave = clave,
-                                tipoUsuario = tipoSeleccionado,
-                                aceptaTerminos = aceptaTerminos,
-                                preferencia = preferenciaSeleccionada
-                            )
-                        },
-                        enabled = formularioHabilitado,
-                        modifier = Modifier.fillMaxWidth().height(50.dp)
-                    ) {
-                        if (uiState.cargando) {
-                            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                        } else {
-                            Text("Registrar")
+                Surface(tonalElevation = 3.dp) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                        Button(
+                            onClick = {
+                                usuariosViewModel.registrarUsuario(
+                                    correo = correo.trim(),
+                                    clave = clave,
+                                    tipoUsuario = tipoSeleccionado,
+                                    aceptaTerminos = aceptaTerminos,
+                                    preferencia = preferenciaSeleccionada
+                                )
+                            },
+                            enabled = formularioHabilitado,
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            if (uiState.cargando) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                            } else {
+                                Text("Registrar", style = MaterialTheme.typography.titleMedium)
+                            }
                         }
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    OutlinedButton(
-                        onClick = onVolverLogin,
-                        modifier = Modifier.fillMaxWidth().height(50.dp)
-                    ) {
-                        Text("Volver")
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedButton(
+                            onClick = {
+                                usuariosViewModel.limpiarMensaje()
+                                onVolverLogin()
+                            },
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Text("Volver al Login")
+                        }
                     }
                 }
             }
@@ -104,9 +137,11 @@ fun RegisterScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(16.dp)
                     .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp)
             ) {
+                Spacer(modifier = Modifier.height(24.dp))
+
                 Text(
                     text = "Registro de usuario",
                     style = MaterialTheme.typography.headlineMedium,
@@ -135,31 +170,26 @@ fun RegisterScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Text("Tipo de usuario", style = MaterialTheme.typography.titleSmall)
+                Text("Tipo de usuario", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                 Box(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
                     OutlinedTextField(
                         value = tipoSeleccionado,
                         onValueChange = {},
                         readOnly = true,
                         modifier = Modifier.fillMaxWidth(),
-                        trailingIcon = {
-                            IconButton(onClick = { menuExpandido = true }) {
-                                Icon(Icons.Default.ArrowDropDown, "Ver opciones")
-                            }
-                        }
+                        shape = RoundedCornerShape(12.dp),
+                        trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) }
                     )
+                    Box(Modifier.matchParentSize().clickable { menuExpandido = true })
                     DropdownMenu(
                         expanded = menuExpandido,
                         onDismissRequest = { menuExpandido = false },
-                        modifier = Modifier.fillMaxWidth(0.9f)
+                        modifier = Modifier.fillMaxWidth(0.8f)
                     ) {
                         tipos.forEach { tipo ->
                             DropdownMenuItem(
                                 text = { Text(tipo) },
-                                onClick = {
-                                    tipoSeleccionado = tipo
-                                    menuExpandido = false
-                                }
+                                onClick = { tipoSeleccionado = tipo; menuExpandido = false }
                             )
                         }
                     }
@@ -167,32 +197,22 @@ fun RegisterScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text("Preferencia de interfaz", style = MaterialTheme.typography.titleSmall)
+                Text("Preferencia de interfaz", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                 preferencias.forEach { pref ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                preferenciaSeleccionada = pref
-                                val modo = if (pref == "Lectura Aumentada") FontSizeMode.Aumentada else FontSizeMode.Normal
-                                onFontSizeModeChange(modo)
-                            }
-                            .padding(vertical = 4.dp)
+                        modifier = Modifier.fillMaxWidth().clickable {
+                            preferenciaSeleccionada = pref
+                            onFontSizeModeChange(if (pref == "Lectura Aumentada") FontSizeMode.Aumentada else FontSizeMode.Normal)
+                        }.padding(vertical = 4.dp)
                     ) {
-                        RadioButton(
-                            selected = (preferenciaSeleccionada == pref),
-                            onClick = {
-                                preferenciaSeleccionada = pref
-                                val modo = if (pref == "Lectura Aumentada") FontSizeMode.Aumentada else FontSizeMode.Normal
-                                onFontSizeModeChange(modo)
-                            }
-                        )
-                        Text(pref, style = MaterialTheme.typography.bodyLarge)
+                        RadioButton(selected = (preferenciaSeleccionada == pref), onClick = {
+                            preferenciaSeleccionada = pref
+                            onFontSizeModeChange(if (pref == "Lectura Aumentada") FontSizeMode.Aumentada else FontSizeMode.Normal)
+                        })
+                        Text(pref)
                     }
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = aceptaTerminos, onCheckedChange = { aceptaTerminos = it })
@@ -201,40 +221,32 @@ fun RegisterScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // 🔥 SECCIÓN CORREGIDA: Ahora muestra datos reales de Firebase
-                Text("Usuarios registrados (Realtime Database)", fontWeight = FontWeight.Bold)
+                Text("Usuarios registrados recientemente", fontWeight = FontWeight.Bold)
                 Card(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.medium),
-                    elevation = CardDefaults.cardElevation(2.dp)
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp)),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     Column {
-                        Row(Modifier.background(MaterialTheme.colorScheme.primaryContainer).padding(12.dp)) {
-                            Text("Correo", Modifier.weight(1f), fontWeight = FontWeight.Bold)
-                            Text("Tipo", Modifier.weight(1f), fontWeight = FontWeight.Bold)
+                        Row(Modifier.background(MaterialTheme.colorScheme.secondaryContainer).padding(12.dp)) {
+                            Text("Correo", Modifier.weight(1.2f), fontWeight = FontWeight.Bold)
+                            Text("Tipo", Modifier.weight(0.8f), fontWeight = FontWeight.Bold)
                         }
-
-                        // Dibujamos cada usuario que viene de Firebase
-                        usuariosViewModel.usuariosRealtime.forEach { usuario ->
-                            Row(Modifier.padding(12.dp).fillMaxWidth()) {
-                                Text(usuario.correo, Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                Text(usuario.tipoUsuario, Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+                        usuariosViewModel.usuariosRealtime.take(5).forEach { usuario ->
+                            Row(Modifier.padding(12.dp)) {
+                                Text(usuario.correo, Modifier.weight(1.2f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(usuario.tipoUsuario, Modifier.weight(0.8f))
                             }
-                            HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
-                        }
-
-                        if (usuariosViewModel.usuariosRealtime.isEmpty()) {
-                            Text("No hay usuarios registrados", Modifier.padding(12.dp), style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(120.dp))
+                Spacer(modifier = Modifier.height(40.dp))
             }
         }
 
+        // --- 🚀 ESTA ES LA CLAVE: El Snackbar fuera del Scaffold pero dentro del Box ---
         AppSnackbarHost(
             hostState = estadoSnackbar,
-            tipoMensaje = if(uiState.esError) TipoMensaje.ERROR else TipoMensaje.EXITO
+            tipoMensaje = if (uiState.esError) TipoMensaje.ERROR else TipoMensaje.EXITO
         )
     }
 }

@@ -77,4 +77,5 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     testImplementation("io.mockk:mockk:1.13.5")
 
+    implementation("com.google.android.gms:play-services-location:21.1.0")
 }
