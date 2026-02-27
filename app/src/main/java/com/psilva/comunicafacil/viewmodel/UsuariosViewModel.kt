@@ -30,7 +30,8 @@ class UsuariosViewModel(
     var usuariosRealtime by mutableStateOf<List<Usuario>>(emptyList())
         private set
 
-    private val database = FirebaseDatabase.getInstance().getReference("usuarios")
+    //private val database = FirebaseDatabase.getInstance().getReference("usuarios")
+    private val database by lazy { FirebaseDatabase.getInstance().getReference("usuarios") }
 
     // 🔥 NUEVO: Escucha cambios en Firebase para llenar la tabla de la UI
     fun cargarUsuarios() {
@@ -54,6 +55,36 @@ class UsuariosViewModel(
         aceptaTerminos: Boolean,
         preferencia: String
     ) {
+        // --- 🧪 INICIO DE VALIDACIONES PREVIAS (Para JUnit) ---
+
+        // Regex para validar formato de correo
+        val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\$".toRegex()
+
+        if (!correo.matches(emailRegex)) {
+            _uiState.value = RegisterUiState(
+                mensaje = "Formato de correo inválido",
+                esError = true
+            )
+            return
+        }
+
+        if (clave.length < 6) {
+            _uiState.value = RegisterUiState(
+                mensaje = "La contraseña debe tener al menos 6 caracteres",
+                esError = true
+            )
+            return
+        }
+
+        if (!aceptaTerminos) {
+            _uiState.value = RegisterUiState(
+                mensaje = "Debes aceptar los términos y condiciones",
+                esError = true
+            )
+            return
+        }
+
+        // --- 🧪 FIN DE VALIDACIONES ---
         viewModelScope.launch {
             _uiState.value = RegisterUiState(cargando = true)
             val usuario = Usuario(
