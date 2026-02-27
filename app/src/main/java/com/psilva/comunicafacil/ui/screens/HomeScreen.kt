@@ -1,7 +1,9 @@
 package com.psilva.comunicafacil.ui.screens
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
+import android.location.Geocoder
 import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
@@ -31,15 +33,38 @@ import com.psilva.comunicafacil.ui.components.AppSnackbarHost
 import com.psilva.comunicafacil.ui.components.TipoMensaje
 import com.psilva.comunicafacil.ui.settings.FontSizeMode
 import com.psilva.comunicafacil.ui.settings.LocalAccessibilitySettings
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 
 val String.isSpeakable: Boolean get() = this.trim().isNotBlank()
+
+/**
+ * Función Helper para Geocoding (Punto 8 de la pauta)
+ * Convierte coordenadas en el nombre de una ciudad o comuna.
+ */
+fun obtenerNombreCiudad(context: Context, latitud: Double, longitud: Double): String {
+    return try {
+        val geocoder = Geocoder(context, Locale.getDefault())
+        val direcciones = geocoder.getFromLocation(latitud, longitud, 1)
+        if (!direcciones.isNullOrEmpty()) {
+            val d = direcciones[0]
+            // Intenta obtener la ciudad (locality), si no, la sub-área (comuna/distrito)
+            d.locality ?: d.subLocality ?: d.subAdminArea ?: d.adminArea ?: "Ubicación detectada"
+        } else {
+            "Ciudad no identificada"
+        }
+    } catch (e: Exception) {
+        Log.e("GEO_DEBUG", "Error en Geocoder: ${e.message}")
+        "Error al obtener ciudad"
+    }
+}
 
 @Composable
 fun HomeScreen(onCerrarSesion: () -> Unit) {
     val context = LocalContext.current
     val alcance = rememberCoroutineScope()
     val estadoSnackbar = remember { SnackbarHostState() }
-    val TAG = "STT_DEBUG" // Etiqueta para Logcat
+    val TAG = "STT_DEBUG"
 
     // --- Estados de Mensajería ---
     var mensajeIngreso by remember { mutableStateOf("") }
@@ -47,7 +72,7 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
     var errorMensaje by remember { mutableStateOf<String?>(null) }
     var tipoMensaje by remember { mutableStateOf(TipoMensaje.INFO) }
 
-    // --- Estados de Reconocimiento de Voz (Semana 8: Feedback Dinámico) ---
+    // --- Estados de Reconocimiento de Voz ---
     var estaEscuchando by remember { mutableStateOf(false) }
     var textoEstadoStt by remember { mutableStateOf("Presione el micrófono para hablar") }
 
@@ -66,6 +91,10 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
     }
     val speechRecognizer = remember { SpeechRecognizer.createSpeechRecognizer(context) }
 
+    // --- Configuración Localización (Punto 7) ---
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+    var textoCoordenadas by remember { mutableStateOf("Ubicación: No obtenida") }
+
     DisposableEffect(Unit) {
         tts.value = TextToSpeech(context) { status ->
             if (status == TextToSpeech.SUCCESS) {
@@ -76,43 +105,21 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
 
         val listener = object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) {
-                Log.d(TAG, "onReadyForSpeech: Sistema listo")
                 estaEscuchando = true
                 textoEstadoStt = "Listo para hablar, te escucho..."
             }
-
-            override fun onBeginningOfSpeech() {
-                Log.d(TAG, "onBeginningOfSpeech: Usuario comenzó a hablar")
-                textoEstadoStt = "Escuchando... 🎤"
-            }
-
-            override fun onRmsChanged(rmsdB: Float) {
-                // Log opcional para ver niveles de audio en Logcat
-                if (rmsdB > 5) Log.v(TAG, "onRmsChanged: Nivel de audio detectado")
-            }
-
-            override fun onBufferReceived(buffer: ByteArray?) {
-                Log.d(TAG, "onBufferReceived: Recibiendo datos de audio")
-            }
-
+            override fun onBeginningOfSpeech() { textoEstadoStt = "Escuchando... 🎤" }
+            override fun onRmsChanged(rmsdB: Float) {}
+            override fun onBufferReceived(buffer: ByteArray?) {}
             override fun onEndOfSpeech() {
-                Log.d(TAG, "onEndOfSpeech: Fin de captura de audio")
                 estaEscuchando = false
                 textoEstadoStt = "Procesando audio... 🔄"
             }
-
             override fun onError(error: Int) {
-                Log.e(TAG, "onError: Código de error STT: $error")
                 estaEscuchando = false
                 textoEstadoStt = "Error al reconocer voz"
-                alcance.launch {
-                    tipoMensaje = TipoMensaje.ERROR
-                    estadoSnackbar.showSnackbar("Error en micrófono o reconocimiento")
-                }
             }
-
             override fun onResults(results: Bundle?) {
-                Log.d(TAG, "onResults: Éxito en el reconocimiento")
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 if (!matches.isNullOrEmpty()) {
                     mensajeIngreso = matches[0]
@@ -120,14 +127,8 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
                 }
                 estaEscuchando = false
             }
-
-            override fun onPartialResults(partialResults: Bundle?) {
-                Log.d(TAG, "onPartialResults: Procesando fragmentos...")
-            }
-
-            override fun onEvent(eventType: Int, params: Bundle?) {
-                Log.d(TAG, "onEvent: Evento código $eventType")
-            }
+            override fun onPartialResults(partialResults: Bundle?) {}
+            override fun onEvent(eventType: Int, params: Bundle?) {}
         }
 
         speechRecognizer.setRecognitionListener(listener)
@@ -136,6 +137,36 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
             tts.value?.stop()
             tts.value?.shutdown()
             speechRecognizer.destroy()
+        }
+    }
+
+    // --- Launcher Permisos GPS Actualizado (Punto 5, 7 y 8) ---
+    @SuppressLint("MissingPermission")
+    val launcherPermisosGps = rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
+    ) { permisos ->
+        val concedido = permisos[android.Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                permisos[android.Manifest.permission.ACCESS_COARSE_LOCATION] == true
+
+        if (concedido) {
+            textoCoordenadas = "Buscando señal satelital..."
+
+            // Forzamos la obtención de ubicación actual (no la última conocida)
+            fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                .addOnSuccessListener { loc ->
+                    if (loc != null) {
+                        // PUNTO 8: Convertir coordenadas a Ciudad
+                        val ciudad = obtenerNombreCiudad(context, loc.latitude, loc.longitude)
+                        textoCoordenadas = "Ciudad: $ciudad\nLat: ${loc.latitude}, Lon: ${loc.longitude}"
+                    } else {
+                        textoCoordenadas = "No se pudo obtener señal precisa."
+                    }
+                }
+                .addOnFailureListener {
+                    textoCoordenadas = "Error al conectar con el sensor GPS."
+                }
+        } else {
+            textoCoordenadas = "Permiso de ubicación denegado"
         }
     }
 
@@ -181,7 +212,6 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // INPUT CON FEEDBACK DINÁMICO (Semana 8)
                 OutlinedTextField(
                     value = mensajeIngreso,
                     onValueChange = { mensajeIngreso = it; errorMensaje = null },
@@ -198,11 +228,8 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
                     },
                     trailingIcon = {
                         IconButton(onClick = {
-                            if (!estaEscuchando) {
-                                speechRecognizer.startListening(intentReconocimiento)
-                            } else {
-                                speechRecognizer.stopListening()
-                            }
+                            if (!estaEscuchando) speechRecognizer.startListening(intentReconocimiento)
+                            else speechRecognizer.stopListening()
                         }) {
                             Icon(
                                 imageVector = Icons.Default.Mic,
@@ -211,10 +238,7 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
                             )
                         }
                     },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text,
-                        imeAction = ImeAction.Done
-                    )
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Done)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -229,7 +253,6 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // PIZARRA DE COMUNICACIÓN
                 Text("Mensaje para comunicar:", style = MaterialTheme.typography.titleMedium)
 
                 ElevatedCard(
@@ -255,59 +278,14 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
                     enabled = mensajeMostrado.isSpeakable,
                     modifier = Modifier.fillMaxWidth().height(64.dp),
                     shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondary,
-                        contentColor = MaterialTheme.colorScheme.onSecondary
-                    )
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
                 ) {
                     Text("Hablar", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
                 }
 
-                // --- BLOQUE DE GEOLOCALIZACIÓN ---
-                val contextUbicacion = LocalContext.current
-                val fusedLocationClient = remember { com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(contextUbicacion) }
-                var textoCoordenadas by remember { mutableStateOf("Ubicación: No obtenida") }
-
-                // Launcher para solicitar permisos en tiempo real
-                @SuppressLint("MissingPermission")
-                val launcherPermisosGps = rememberLauncherForActivityResult(
-                    androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
-                ) { permisos ->
-                    val concedido = permisos[android.Manifest.permission.ACCESS_FINE_LOCATION] == true ||
-                            permisos[android.Manifest.permission.ACCESS_COARSE_LOCATION] == true
-
-                    if (concedido) {
-                        try {
-                            // VERIFICACIÓN DE SEGURIDAD EXPLICITA (Esto quita el error)
-                            if (androidx.core.app.ActivityCompat.checkSelfPermission(
-                                    contextUbicacion,
-                                    android.Manifest.permission.ACCESS_FINE_LOCATION
-                                ) == android.content.pm.PackageManager.PERMISSION_GRANTED ||
-                                androidx.core.app.ActivityCompat.checkSelfPermission(
-                                    contextUbicacion,
-                                    android.Manifest.permission.ACCESS_COARSE_LOCATION
-                                ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-                            ) {
-                                fusedLocationClient.lastLocation.addOnSuccessListener { loc ->
-                                    if (loc != null) {
-                                        textoCoordenadas = "Lat: ${loc.latitude}, Lon: ${loc.longitude}"
-                                        Log.d("GPS_DEBUG", "Ubicación obtenida: $textoCoordenadas")
-                                    } else {
-                                        textoCoordenadas = "GPS activo, buscando señal..."
-                                    }
-                                }
-                            }
-                        } catch (e: Exception) {
-                            Log.e("GPS_DEBUG", "Error: ${e.message}")
-                        }
-                    } else {
-                        textoCoordenadas = "Permiso de ubicación denegado"
-                    }
-                }
-
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Interfaz de Usuario para la ubicación
+                // --- BLOQUE DE GEOLOCALIZACIÓN REPARADO ---
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -317,11 +295,11 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp),
-                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "📍 Localización del Dispositivo",
+                                text = "📍 Localización y Ciudad",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold
                             )
@@ -343,6 +321,8 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(24.dp))
 
                 OutlinedButton(
                     onClick = onCerrarSesion,
