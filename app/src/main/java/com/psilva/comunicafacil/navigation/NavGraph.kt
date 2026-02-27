@@ -1,6 +1,7 @@
 package com.psilva.comunicafacil.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -29,7 +30,7 @@ fun NavGraph(
                 onIrARecuperar = { navController.navigate(Screen.Recuperar.route) },
                 onLoginExitoso = { usuario ->
 
-                    val modo = if (usuario.preferencia == "Lectura Aumentada") {
+                    val modo = if (usuario.preferencia.equals("Lectura Aumentada", ignoreCase = true)) {
                         FontSizeMode.Aumentada
                     } else {
                         FontSizeMode.Normal
@@ -48,9 +49,16 @@ fun NavGraph(
 
         composable(Screen.Registro.route) {
             RegisterScreen(
-                onVolverLogin = { navController.popBackStack() },
+                onRegistroExitoso = {
+                    navController.navigate("login") {
+                        popUpTo("register") { inclusive = true }
+                    }
+                },
+                onVolverLogin = {
+                    navController.popBackStack()
+                },
                 usuariosViewModel = usuariosViewModel,
-                onFontSizeModeChange = onFontSizeModeChange // SE AGREGA ESTA LÍNEA (Soluciona el error)
+                onFontSizeModeChange = onFontSizeModeChange
             )
         }
 

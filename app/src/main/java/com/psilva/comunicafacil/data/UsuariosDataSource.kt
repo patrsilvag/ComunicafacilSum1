@@ -3,14 +3,7 @@ package com.psilva.comunicafacil.data
 import com.psilva.comunicafacil.model.Usuario
 
 interface UsuariosDataSource {
-
-    fun obtenerUsuarios(): List<Usuario>
-
-    fun existeCorreo(correo: String): Boolean
-
-    fun validarCredenciales(correo: String, clave: String): Boolean
-
-    fun registrarUsuario(usuario: Usuario): Result<Unit>
-
-    fun obtenerUsuarioPorCredenciales( correo: String, clave: String ): Usuario?
+    suspend fun registrarUsuario(usuario: Usuario): Result<Unit>
+    suspend fun login(correo: String, clave: String): Result<Usuario>
+    suspend fun recuperarPassword(correo: String): Result<Unit>
 }

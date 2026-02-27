@@ -8,21 +8,19 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.psilva.comunicafacil.R
+import com.psilva.comunicafacil.model.Usuario
 import com.psilva.comunicafacil.ui.components.AppSnackbarHost
 import com.psilva.comunicafacil.ui.components.EmailField
 import com.psilva.comunicafacil.ui.components.PasswordField
 import com.psilva.comunicafacil.ui.components.TipoMensaje
 import com.psilva.comunicafacil.ui.settings.FontSizeMode
+import com.psilva.comunicafacil.utils.validarCampo
 import com.psilva.comunicafacil.viewmodel.UsuariosViewModel
 import kotlinx.coroutines.launch
-
-import androidx.compose.ui.zIndex
-import com.psilva.comunicafacil.model.Usuario
-import com.psilva.comunicafacil.utils.validarCampo
 
 @Composable
 fun LoginScreen(
@@ -34,12 +32,14 @@ fun LoginScreen(
     darkMode: Boolean,
     onDarkModeChange: (Boolean) -> Unit
 ) {
+    // Estados de UI
     var correo by remember { mutableStateOf("") }
     var correoValido by remember { mutableStateOf(false) }
     var clave by remember { mutableStateOf("") }
     var claveVisible by remember { mutableStateOf(false) }
     var errorCorreo by remember { mutableStateOf<String?>(null) }
     var errorClave by remember { mutableStateOf<String?>(null) }
+    var cargando by remember { mutableStateOf(false) }
 
     val estadoSnackbar = remember { SnackbarHostState() }
     val alcance = rememberCoroutineScope()
@@ -47,18 +47,14 @@ fun LoginScreen(
 
     fun validarCampos(): Boolean {
         var ok = true
-
         ok = validarCampo(correo.isNotBlank()) {
             errorCorreo = "El correo es obligatorio"
         } && ok
-
         ok = validarCampo(clave.isNotBlank()) {
             errorClave = "La contraseña es obligatoria"
         } && ok
-
         return ok
     }
-
 
     Scaffold(
         snackbarHost = { AppSnackbarHost(estadoSnackbar, tipoMensaje) }
@@ -71,7 +67,7 @@ fun LoginScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // LOGO  Integrado con Card y soporte para Modo Oscuro
+            // Logo adaptativo (Claro/Oscuro)
             Card(
                 modifier = Modifier
                     .width(280.dp)
@@ -84,15 +80,10 @@ fun LoginScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Box(
-                    modifier = Modifier.fillMaxWidth().fillMaxHeight(),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    val logoRes = if (darkMode) {
-                        R.drawable.logo_dark
-                    } else {
-                        R.drawable.logo_light
-                    }
-
+                    val logoRes = if (darkMode) R.drawable.logo_dark else R.drawable.logo_light
                     Image(
                         painter = painterResource(id = logoRes),
                         contentDescription = "Logo ComunicaFácil",
@@ -108,20 +99,16 @@ fun LoginScreen(
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            // Switch de Contraste Visual para Accesibilidad
+            // Control de Accesibilidad (Modo Oscuro)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .padding(vertical = 8.dp)
-                    .zIndex(1f)
+                modifier = Modifier.padding(vertical = 8.dp).zIndex(1f)
             ) {
                 Text(text = "Contraste visual")
                 Spacer(modifier = Modifier.width(8.dp))
                 Switch(
                     checked = darkMode,
-                    onCheckedChange = {
-                        onDarkModeChange(it)
-                    }
+                    onCheckedChange = { onDarkModeChange(it) }
                 )
             }
 
@@ -133,7 +120,12 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth()
             )
             errorCorreo?.let {
-                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp))
+                Text(
+                    text = it,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -151,25 +143,38 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            Button(
-                onClick = {
-                    if (!validarCampos()) return@Button
-                    val usuario = usuariosViewModel.login(correo, clave)
+            // Botón de Ingreso con Lógica de Firebase
+            if (cargando) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+            } else {
+                Button(
+                    onClick = {
+                        if (!validarCampos()) return@Button
 
-                    if (usuario != null) {
-                        onLoginExitoso(usuario)
-                    } else {
-                        alcance.launch {
-                            tipoMensaje = TipoMensaje.ERROR
-                            estadoSnackbar.showSnackbar("Credenciales incorrectas")
+                        cargando = true
+                        usuariosViewModel.login(correo, clave) { resultado ->
+                            cargando = false
+                            resultado.fold(
+                                onSuccess = { usuario ->
+                                    onLoginExitoso(usuario)
+                                },
+                                onFailure = { error ->
+                                    alcance.launch {
+                                        tipoMensaje = TipoMensaje.ERROR
+                                        estadoSnackbar.showSnackbar(
+                                            error.message ?: "Credenciales incorrectas"
+                                        )
+                                    }
+                                }
+                            )
                         }
-                    }
-                },
-                enabled = correoValido && clave.isNotBlank(),
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Text("Ingresar", style = MaterialTheme.typography.titleMedium)
+                    },
+                    enabled = correoValido && clave.isNotBlank(),
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Text("Ingresar", style = MaterialTheme.typography.titleMedium)
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))

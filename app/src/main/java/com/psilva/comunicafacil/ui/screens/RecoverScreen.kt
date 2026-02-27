@@ -23,8 +23,6 @@ fun RecoverScreen(
 ) {
     var correo by remember { mutableStateOf("") }
     var correoValido by remember { mutableStateOf(false) }
-
-    // Error persistente (solo para caso "vacío" o errores de negocio)
     var errorCorreo by remember { mutableStateOf<String?>(null) }
 
     val estadoSnackbar = remember { SnackbarHostState() }
@@ -45,10 +43,13 @@ fun RecoverScreen(
         return ok
     }
 
-
-
     Scaffold(
-        snackbarHost = { AppSnackbarHost(hostState = estadoSnackbar, tipoMensaje = tipoMensaje) }
+        snackbarHost = {
+            AppSnackbarHost(
+                hostState = estadoSnackbar,
+                tipoMensaje = tipoMensaje
+            )
+        }
     ) { paddingInterior ->
 
         Column(
@@ -57,22 +58,24 @@ fun RecoverScreen(
                 .padding(16.dp)
                 .fillMaxSize()
         ) {
+
             Text(
                 text = "Recuperar contraseña",
-                style = MaterialTheme.typography.headlineLarge, // Fuente grande para accesibilidad
+                style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.primary, // Azul profundo
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Ingresa tu correo y te enviaremos las instrucciones para restablecer tu clave.",
+                text = "Ingresa tu correo y te enviaremos instrucciones de recuperación.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
                 modifier = Modifier.padding(bottom = 24.dp)
             )
+
             EmailField(
                 value = correo,
                 onValueChange = {
@@ -100,19 +103,26 @@ fun RecoverScreen(
                     errorCorreo = null
                     if (!validarAntesDeEnviar()) return@Button
 
-                    alcance.launch {
-                        val existe = usuariosViewModel.existeCorreo(correo.trim())
-                        if (existe) {
-                            tipoMensaje = TipoMensaje.EXITO
-                            estadoSnackbar.showSnackbar(
-                                message = "Correo encontrado. Recuperación simulada",
-                                duration = SnackbarDuration.Short
-                            )
-                        } else {
-                            tipoMensaje = TipoMensaje.ERROR
-                            estadoSnackbar.showSnackbar(
-                                message = "Correo no registrado",
-                                duration = SnackbarDuration.Short
+                    // Llamada asíncrona al ViewModel
+                    usuariosViewModel.recuperarPassword(correo.trim()) { resultado ->
+                        alcance.launch {
+                            resultado.fold(
+                                onSuccess = {
+                                    // Firebase ya envió el correo si llegamos aquí
+                                    tipoMensaje = TipoMensaje.EXITO
+                                    estadoSnackbar.showSnackbar(
+                                        message = "Si el correo está registrado, recibirás un mensaje pronto.",
+                                        duration = SnackbarDuration.Long
+                                    )
+                                },
+                                onFailure = { error ->
+                                    // Manejo de errores de red o Firebase
+                                    tipoMensaje = TipoMensaje.ERROR
+                                    estadoSnackbar.showSnackbar(
+                                        message = error.message ?: "Error al procesar la solicitud",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                }
                             )
                         }
                     }
@@ -120,10 +130,10 @@ fun RecoverScreen(
                 enabled = correoValido,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp), // Altura mejorada para accesibilidad motriz
-                shape = RoundedCornerShape(16.dp), // Esquinas modernas de Material 3
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary, // Azul profundo
+                    containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 )
             ) {
@@ -140,14 +150,17 @@ fun RecoverScreen(
                 onClick = onVolverLogin,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp), // Consistencia en el tamaño de los botones
+                    .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline) // Borde definido en Color.kt
+                border = BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outline
+                )
             ) {
                 Text(
                     text = "Volver",
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary // Texto en azul para coherencia visual
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }

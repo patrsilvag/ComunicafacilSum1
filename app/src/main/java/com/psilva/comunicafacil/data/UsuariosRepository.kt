@@ -1,57 +1,50 @@
 package com.psilva.comunicafacil.data
 
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 import com.psilva.comunicafacil.model.Usuario
-import com.psilva.comunicafacil.utils.normalizarCorreo
-private const val MAX_USUARIOS = 5
+import kotlinx.coroutines.tasks.await
+
 class UsuariosRepository : UsuariosDataSource {
 
-    private val usuarios = mutableListOf<Usuario>()
+    private val auth = FirebaseAuth.getInstance()
+    private val database = FirebaseDatabase.getInstance().getReference("usuarios")
 
-
-    override fun obtenerUsuarios(): List<Usuario> =
-        usuarios.toList()
-
-    override fun existeCorreo(correo: String): Boolean {
-        val normalizado = correo.normalizarCorreo()
-        return usuarios.any { it.correo == normalizado }
-    }
-
-    override fun validarCredenciales(correo: String, clave: String): Boolean {
-        val normalizado =correo.normalizarCorreo()
-        return usuarios.any {
-            it.correo == normalizado && it.clave == clave
-        }
-    }
-
-
-    override fun registrarUsuario(usuario: Usuario): Result<Unit> {
+    override suspend fun registrarUsuario(usuario: Usuario): Result<Unit> {
         return try {
-            when {
-                usuarios.size >= MAX_USUARIOS ->
-                    Result.failure(
-                        IllegalStateException("Límite alcanzado: máximo 5 usuarios")
-                    )
+            // 1. Crear en Auth
+            val result = auth.createUserWithEmailAndPassword(usuario.correo, usuario.clave).await()
+            val uid = result.user?.uid ?: throw Exception("ID no encontrado")
 
-                existeCorreo(usuario.correo) ->
-                    Result.failure(
-                        IllegalArgumentException("El correo ya se encuentra registrado")
-                    )
-
-                else -> {
-                    usuarios.add(usuario)
-                    Result.success(Unit)
-                }
-            }
+            // 2. Guardar datos extras en Realtime Database
+            database.child(uid).setValue(usuario).await()
+            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    override fun obtenerUsuarioPorCredenciales(correo: String, clave: String):  Usuario? {
-        val normalizado =correo.normalizarCorreo()
-        return usuarios.find {
-            it.correo == normalizado && it.clave == clave
+    override suspend fun login(correo: String, clave: String): Result<Usuario> {
+        return try {
+            val result = auth.signInWithEmailAndPassword(correo, clave).await()
+            val uid = result.user?.uid ?: throw Exception("Usuario no encontrado")
+
+            val snapshot = database.child(uid).get().await()
+            val usuario = snapshot.getValue(Usuario::class.java)
+
+            if (usuario != null) Result.success(usuario)
+            else Result.failure(Exception("Datos de perfil no encontrados"))
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
+    override suspend fun recuperarPassword(correo: String): Result<Unit> {
+        return try {
+            auth.sendPasswordResetEmail(correo).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
