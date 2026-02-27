@@ -6,6 +6,7 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -28,7 +30,6 @@ import com.psilva.comunicafacil.ui.components.TipoMensaje
 import com.psilva.comunicafacil.ui.settings.FontSizeMode
 import com.psilva.comunicafacil.ui.settings.LocalAccessibilitySettings
 
-// PROPIEDAD DE EXTENSIÓN: Optimiza la validación de texto
 val String.isSpeakable: Boolean get() = this.trim().isNotBlank()
 
 @Composable
@@ -36,6 +37,7 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
     val context = LocalContext.current
     val alcance = rememberCoroutineScope()
     val estadoSnackbar = remember { SnackbarHostState() }
+    val TAG = "STT_DEBUG" // Etiqueta para Logcat
 
     // --- Estados de Mensajería ---
     var mensajeIngreso by remember { mutableStateOf("") }
@@ -43,7 +45,7 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
     var errorMensaje by remember { mutableStateOf<String?>(null) }
     var tipoMensaje by remember { mutableStateOf(TipoMensaje.INFO) }
 
-    // --- Estados de Reconocimiento de Voz (Semana 8) ---
+    // --- Estados de Reconocimiento de Voz (Semana 8: Feedback Dinámico) ---
     var estaEscuchando by remember { mutableStateOf(false) }
     var textoEstadoStt by remember { mutableStateOf("Presione el micrófono para hablar") }
 
@@ -53,7 +55,7 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
     val fontSizeMode = LocalAccessibilitySettings.current.fontSizeMode
     val localeEsCL = Locale.Builder().setLanguage("es").setRegion("CL").build()
 
-    // --- Configuración SpeechToText (Semana 8: Criterio Técnico) ---
+    // --- Configuración SpeechToText ---
     val intentReconocimiento = remember {
         Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
@@ -63,7 +65,6 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
     val speechRecognizer = remember { SpeechRecognizer.createSpeechRecognizer(context) }
 
     DisposableEffect(Unit) {
-        // Inicializar TTS
         tts.value = TextToSpeech(context) { status ->
             if (status == TextToSpeech.SUCCESS) {
                 tts.value?.setLanguage(localeEsCL)
@@ -71,38 +72,60 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
             }
         }
 
-        // Listener de Reconocimiento (Criterios Semana 8)
         val listener = object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) {
+                Log.d(TAG, "onReadyForSpeech: Sistema listo")
                 estaEscuchando = true
-                textoEstadoStt = "Listo para hablar..." // Estado: Listo para hablar
+                textoEstadoStt = "Listo para hablar, te escucho..."
             }
 
-            override fun onResults(results: Bundle?) {
+            override fun onBeginningOfSpeech() {
+                Log.d(TAG, "onBeginningOfSpeech: Usuario comenzó a hablar")
+                textoEstadoStt = "Escuchando... 🎤"
+            }
+
+            override fun onRmsChanged(rmsdB: Float) {
+                // Log opcional para ver niveles de audio en Logcat
+                if (rmsdB > 5) Log.v(TAG, "onRmsChanged: Nivel de audio detectado")
+            }
+
+            override fun onBufferReceived(buffer: ByteArray?) {
+                Log.d(TAG, "onBufferReceived: Recibiendo datos de audio")
+            }
+
+            override fun onEndOfSpeech() {
+                Log.d(TAG, "onEndOfSpeech: Fin de captura de audio")
                 estaEscuchando = false
-                val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                if (!matches.isNullOrEmpty()) {
-                    mensajeIngreso = matches[0] // Audio transformado a texto
-                    textoEstadoStt = "Texto capturado"
-                }
+                textoEstadoStt = "Procesando audio... 🔄"
             }
 
             override fun onError(error: Int) {
+                Log.e(TAG, "onError: Código de error STT: $error")
                 estaEscuchando = false
-                textoEstadoStt = "Error en el reconocimiento"
+                textoEstadoStt = "Error al reconocer voz"
                 alcance.launch {
                     tipoMensaje = TipoMensaje.ERROR
-                    estadoSnackbar.showSnackbar("Error al acceder al micrófono")
+                    estadoSnackbar.showSnackbar("Error en micrófono o reconocimiento")
                 }
             }
 
-            // Métodos obligatorios de la interfaz
-            override fun onBeginningOfSpeech() {}
-            override fun onRmsChanged(rmsdB: Float) {}
-            override fun onBufferReceived(buffer: ByteArray?) {}
-            override fun onEndOfSpeech() { estaEscuchando = false }
-            override fun onPartialResults(partialResults: Bundle?) {}
-            override fun onEvent(eventType: Int, params: Bundle?) {}
+            override fun onResults(results: Bundle?) {
+                Log.d(TAG, "onResults: Éxito en el reconocimiento")
+                val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                if (!matches.isNullOrEmpty()) {
+                    mensajeIngreso = matches[0]
+                    textoEstadoStt = "Texto capturado con éxito ✅"
+                }
+                estaEscuchando = false
+            }
+
+            override fun onPartialResults(partialResults: Bundle?) {
+                Log.d(TAG, "onPartialResults: Procesando fragmentos...")
+            }
+
+            override fun onEvent(eventType: Int, params: Bundle?) {
+                Log.d(TAG, "onEvent: Evento código $eventType")
+            }
         }
 
         speechRecognizer.setRecognitionListener(listener)
@@ -114,6 +137,7 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
         }
     }
 
+    // Funciones de acción
     fun procesarYMostrarMensaje() {
         errorMensaje = null
         if (!mensajeIngreso.isSpeakable) {
@@ -155,7 +179,7 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // INPUT DE MENSAJE CON MICRÓFONO (Semana 8)
+                // INPUT CON FEEDBACK DINÁMICO (Semana 8)
                 OutlinedTextField(
                     value = mensajeIngreso,
                     onValueChange = { mensajeIngreso = it; errorMensaje = null },
@@ -164,10 +188,19 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
                     minLines = 3,
                     shape = RoundedCornerShape(16.dp),
                     isError = errorMensaje != null,
-                    supportingText = { Text(if (estaEscuchando) "Escuchando..." else textoEstadoStt) },
+                    supportingText = {
+                        Text(
+                            text = textoEstadoStt,
+                            color = if (estaEscuchando) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
                     trailingIcon = {
                         IconButton(onClick = {
-                            if (!estaEscuchando) speechRecognizer.startListening(intentReconocimiento)
+                            if (!estaEscuchando) {
+                                speechRecognizer.startListening(intentReconocimiento)
+                            } else {
+                                speechRecognizer.stopListening()
+                            }
                         }) {
                             Icon(
                                 imageVector = Icons.Default.Mic,
