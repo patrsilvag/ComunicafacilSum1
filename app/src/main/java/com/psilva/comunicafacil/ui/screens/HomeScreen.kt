@@ -33,6 +33,7 @@ import com.psilva.comunicafacil.ui.components.AppSnackbarHost
 import com.psilva.comunicafacil.ui.components.TipoMensaje
 import com.psilva.comunicafacil.ui.settings.FontSizeMode
 import com.psilva.comunicafacil.ui.settings.LocalAccessibilitySettings
+import com.psilva.comunicafacil.viewmodel.UbicacionViewModel
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 
@@ -48,7 +49,6 @@ fun obtenerNombreCiudad(context: Context, latitud: Double, longitud: Double): St
         val direcciones = geocoder.getFromLocation(latitud, longitud, 1)
         if (!direcciones.isNullOrEmpty()) {
             val d = direcciones[0]
-            // Intenta obtener la ciudad (locality), si no, la sub-área (comuna/distrito)
             d.locality ?: d.subLocality ?: d.subAdminArea ?: d.adminArea ?: "Ubicación detectada"
         } else {
             "Ciudad no identificada"
@@ -60,11 +60,16 @@ fun obtenerNombreCiudad(context: Context, latitud: Double, longitud: Double): St
 }
 
 @Composable
-fun HomeScreen(onCerrarSesion: () -> Unit) {
+fun HomeScreen(
+    onCerrarSesion: () -> Unit,
+    ubicacionViewModel: UbicacionViewModel
+) {
     val context = LocalContext.current
     val alcance = rememberCoroutineScope()
     val estadoSnackbar = remember { SnackbarHostState() }
-    val TAG = "STT_DEBUG"
+
+    // CRUD: Observamos el estado de la ubicación desde Firebase
+    val datosUbicacionNube by ubicacionViewModel.ubicacionActual.collectAsState()
 
     // --- Estados de Mensajería ---
     var mensajeIngreso by remember { mutableStateOf("") }
@@ -91,9 +96,8 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
     }
     val speechRecognizer = remember { SpeechRecognizer.createSpeechRecognizer(context) }
 
-    // --- Configuración Localización (Punto 7) ---
+    // --- Configuración Localización ---
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
-    var textoCoordenadas by remember { mutableStateOf("Ubicación: No obtenida") }
 
     DisposableEffect(Unit) {
         tts.value = TextToSpeech(context) { status ->
@@ -140,7 +144,7 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
         }
     }
 
-    // --- Launcher Permisos GPS Actualizado (Punto 5, 7 y 8) ---
+    // --- Launcher Permisos GPS con integración Firebase ---
     @SuppressLint("MissingPermission")
     val launcherPermisosGps = rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
@@ -149,24 +153,17 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
                 permisos[android.Manifest.permission.ACCESS_COARSE_LOCATION] == true
 
         if (concedido) {
-            textoCoordenadas = "Buscando señal satelital..."
-
-            // Forzamos la obtención de ubicación actual (no la última conocida)
+            alcance.launch {
+                estadoSnackbar.showSnackbar("Obteniendo ubicación precisa...")
+            }
             fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
                 .addOnSuccessListener { loc ->
                     if (loc != null) {
-                        // PUNTO 8: Convertir coordenadas a Ciudad
                         val ciudad = obtenerNombreCiudad(context, loc.latitude, loc.longitude)
-                        textoCoordenadas = "Ciudad: $ciudad\nLat: ${loc.latitude}, Lon: ${loc.longitude}"
-                    } else {
-                        textoCoordenadas = "No se pudo obtener señal precisa."
+                        // CRUD: CREATE/UPDATE - Guardamos en Firebase
+                        ubicacionViewModel.procesarNuevaUbicacion(loc.latitude, loc.longitude, ciudad)
                     }
                 }
-                .addOnFailureListener {
-                    textoCoordenadas = "Error al conectar con el sensor GPS."
-                }
-        } else {
-            textoCoordenadas = "Permiso de ubicación denegado"
         }
     }
 
@@ -285,7 +282,7 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // --- BLOQUE DE GEOLOCALIZACIÓN REPARADO ---
+                // --- BLOQUE DE GEOLOCALIZACIÓN CON CRUD (READ) ---
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -299,12 +296,18 @@ fun HomeScreen(onCerrarSesion: () -> Unit) {
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "📍 Localización y Ciudad",
+                                text = "📍 Localización en Tiempo Real",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold
                             )
+                            // Mostramos los datos que vienen de Firebase
                             Text(
-                                text = textoCoordenadas,
+                                text = if (datosUbicacionNube != null) {
+                                    "Ciudad: ${datosUbicacionNube!!.ciudad}\n" +
+                                            "Lat: ${datosUbicacionNube!!.latitud}, Lon: ${datosUbicacionNube!!.longitud}"
+                                } else {
+                                    "Sin ubicación registrada en la nube"
+                                },
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         }

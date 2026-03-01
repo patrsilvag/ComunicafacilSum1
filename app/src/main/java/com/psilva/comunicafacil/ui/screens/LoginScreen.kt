@@ -1,5 +1,6 @@
 package com.psilva.comunicafacil.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -47,22 +48,20 @@ fun LoginScreen(
     val alcance = rememberCoroutineScope()
     var tipoMensaje by remember { mutableStateOf(TipoMensaje.INFO) }
 
-    // Esto asegura que CADA VEZ que la pantalla se muestra, la pizarra se borra
+    // Limpieza al iniciar y al salir
     LaunchedEffect(Unit) {
         usuariosViewModel.limpiarMensaje()
     }
 
-    // LIMPIEZA AUTOMÁTICA AL SALIR
     DisposableEffect(Unit) {
         onDispose {
             usuariosViewModel.limpiarMensaje()
         }
     }
 
-    //  EFECTO LANZADO: Escucha mensajes del ViewModel (Errores traducidos)
+    // Escucha de mensajes (Errores o Éxitos)
     LaunchedEffect(uiState.mensaje) {
         uiState.mensaje?.let { texto ->
-            // Corregido: Si no es error, usamos EXITO (verde) en lugar de INFO (azul)
             tipoMensaje = if (uiState.esError) TipoMensaje.ERROR else TipoMensaje.EXITO
             alcance.launch {
                 estadoSnackbar.showSnackbar(texto)
@@ -73,16 +72,20 @@ fun LoginScreen(
 
     fun validarCampos(): Boolean {
         var ok = true
-        ok = validarCampo(correo.isNotBlank()) {
+        errorCorreo = null
+        errorClave = null
+
+        if (correo.isBlank()) {
             errorCorreo = "El correo es obligatorio"
-        } && ok
-        ok = validarCampo(clave.isNotBlank()) {
+            ok = false
+        }
+        if (clave.isBlank()) {
             errorClave = "La contraseña es obligatoria"
-        } && ok
+            ok = false
+        }
         return ok
     }
 
-    // Usamos Box para que el Snackbar flote al final, igual que en Recover y Register
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold { paddingInterior ->
             Column(
@@ -93,7 +96,7 @@ fun LoginScreen(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Logo adaptativo
+                // Logo adaptativo según el tema
                 Card(
                     modifier = Modifier
                         .width(280.dp)
@@ -125,10 +128,10 @@ fun LoginScreen(
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
-                // Control de Accesibilidad (Modo Oscuro)
+                // Control de Contraste (Modo Oscuro)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(vertical = 8.dp).zIndex(1f)
+                    modifier = Modifier.padding(vertical = 8.dp)
                 ) {
                     Text(text = "Contraste visual")
                     Spacer(modifier = Modifier.width(8.dp))
@@ -169,17 +172,21 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Botón de Ingreso
+                // Botón de Ingreso con manejo de carga
                 if (uiState.cargando) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(48.dp),
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 } else {
                     Button(
                         onClick = {
-                            if (!validarCampos()) return@Button
-
-                            usuariosViewModel.login(correo, clave) { resultado ->
-                                resultado.onSuccess { usuario ->
-                                    onLoginExitoso(usuario)
+                            if (validarCampos()) {
+                                usuariosViewModel.login(correo, clave) { resultado ->
+                                    resultado.onSuccess { usuario ->
+                                        Log.d("LOGIN_DEBUG", "Usuario logueado: ${usuario.uid}")
+                                        onLoginExitoso(usuario)
+                                    }
                                 }
                             }
                         },
@@ -198,10 +205,12 @@ fun LoginScreen(
             }
         }
 
-        // Host del Snackbar fuera del Scaffold para asegurar visibilidad superior
-        AppSnackbarHost(
-            hostState = estadoSnackbar,
-            tipoMensaje = tipoMensaje
-        )
+        // Host del Snackbar posicionado en la parte superior
+        Box(modifier = Modifier.fillMaxSize().zIndex(10f)) {
+            AppSnackbarHost(
+                hostState = estadoSnackbar,
+                tipoMensaje = tipoMensaje
+            )
+        }
     }
 }

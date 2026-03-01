@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.psilva.comunicafacil.ui.components.AppSnackbarHost
 import com.psilva.comunicafacil.ui.components.EmailField
@@ -57,6 +58,7 @@ fun RegisterScreen(
     val estadoSnackbar = remember { SnackbarHostState() }
     val alcance = rememberCoroutineScope()
 
+
     // Esto asegura que CADA VEZ que la pantalla se muestra, la pizarra se borra
     LaunchedEffect(Unit) {
         usuariosViewModel.limpiarMensaje()
@@ -79,6 +81,8 @@ fun RegisterScreen(
             teclado?.hide()
 
             alcance.launch {
+                // Esto obliga a Compose a procesar el cambio de color de tipoMensaje
+                delay(50)
                 estadoSnackbar.showSnackbar(texto)
 
                 if (uiState.registroExitoso) {
@@ -244,9 +248,12 @@ fun RegisterScreen(
         }
 
         // --- 🚀 ESTA ES LA CLAVE: El Snackbar fuera del Scaffold pero dentro del Box ---
-        AppSnackbarHost(
-            hostState = estadoSnackbar,
-            tipoMensaje = if (uiState.esError) TipoMensaje.ERROR else TipoMensaje.EXITO
-        )
+        // Snackbar con Z-Index para asegurar visibilidad
+        Box(modifier = Modifier.fillMaxSize().zIndex(10f)) {
+            AppSnackbarHost(
+                hostState = estadoSnackbar,
+                tipoMensaje = if (uiState.esError) TipoMensaje.ERROR else TipoMensaje.EXITO
+            )
+        }
     }
 }
